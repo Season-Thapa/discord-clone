@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Pin.Discord.Blazor.Components;
+using Pin.Discord.Core.Data;
 
 namespace Pin.Discord.Blazor
 {
@@ -12,7 +14,9 @@ namespace Pin.Discord.Blazor
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
+            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultDatabase")));
             var app = builder.Build();
+
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
