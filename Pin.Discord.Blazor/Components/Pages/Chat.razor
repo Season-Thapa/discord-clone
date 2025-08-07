@@ -1,0 +1,54 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@page "/chathub"
+@inject NavigationManager Navigation
+
+<h3>@CurrentChannelName</h3>
+
+<ul>
+    @foreach (var message in Messages)
+    {
+        <li><b>@message.UserName</b>: @message.Content</li>
+    }
+</ul>
+
+<input @bind="NewMessage" @onkeydown="HandleKey" />
+
+@code {
+    private HubConnection _hub;
+    private List<ChatMessageDto> Messages = new();
+    private string NewMessage;
+    private int ChannelId = 1;
+    private string CurrentChannelName = "General";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hub = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hub.On<string, string>("ReceiveMessage", (user, message) =>
+        {
+            Messages.Add(new ChatMessageDto { UserName = user, Content = message });
+            StateHasChanged();
+        });
+
+        await _hub.StartAsync();
+        await _hub.InvokeAsync("JoinChannel", ChannelId);
+    }
+
+    private async Task HandleKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(NewMessage))
+        {
+            await _hub.InvokeAsync("SendMessage", ChannelId, "CurrentUser", NewMessage);
+            NewMessage = "";
+        }
+    }
+
+    public class ChatMessageDto
+    {
+        public string UserName { get; set; }
+        public string Content { get; set; }
+    }
+}

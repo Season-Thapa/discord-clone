@@ -1,0 +1,59 @@
+﻿@page "/login"
+@using Pin.Discord.Core.Interfaces
+@using Pin.Discord.Core.Services
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IUserService UserService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+
+<h3>Login</h3>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <p style="color:red">@ErrorMessage</p>
+}
+
+<input @bind="Username" placeholder="Gebruikersnaam" />
+<br />
+<input @bind="Password" type="password" placeholder="Wachtwoord" />
+<br />
+<button @onclick="LoginAsync">Login</button>
+<button @onclick="NavigateToRegister">Register</button>
+
+@code {
+    private string Username;
+    private string Password;
+    private string ErrorMessage;
+
+    private async Task LoginAsync()
+    {
+        var user = await UserService.AuthenticateAsync(Username, Password);
+
+        if (user != null)
+        {
+            var identity = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Name, user.Name),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+            }, "FakeAuth");
+
+            var principal = new ClaimsPrincipal(identity);
+
+            // cast naar custom provider en meld aan
+            if (AuthProvider is Auth customAuth)
+                customAuth.NotifyAuthenticationStateChanged(principal);
+
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            ErrorMessage = "Ongeldige inloggegevens";
+        }
+    }
+    private void NavigateToRegister()
+    {
+        Navigation.NavigateTo("/register");
+    }
+}

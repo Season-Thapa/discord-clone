@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Pin.Discord.Core.Data;
 using Pin.Discord.Core.Entities;
+using Pin.Discord.Core.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Pin.Discord.Core.Services
 {
-    public class ChannelService
+    public class ChannelService: IChannelService
     {
         private readonly ApplicationDbContext _context;
         public ChannelService(ApplicationDbContext context) 

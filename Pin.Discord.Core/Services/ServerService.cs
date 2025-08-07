@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Pin.Discord.Core.Data;
 using Pin.Discord.Core.Entities;
+using Pin.Discord.Core.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Pin.Discord.Core.Services
 {
-    public class ServerService
+    public class ServerService : IServerService
     {
         private readonly ApplicationDbContext _context;
 
@@ -22,12 +23,12 @@ namespace Pin.Discord.Core.Services
             return await _context.Servers.ToListAsync();
         }
 
-        public async Task<Server> GetServerByServerId( int serverId)
+        public async Task<Server> GetServerByServerIdAsync( int serverId)
         {
             return await _context.Servers.FindAsync(serverId);
         }
 
-        public async Task AddNewServer(string serverName)
+        public async Task AddNewServerAsync(string serverName)
         {
             try
             {
@@ -43,7 +44,7 @@ namespace Pin.Discord.Core.Services
             }
         }
 
-        public async Task DeleteServer(int serverId)
+        public async Task DeleteServerAsync(int serverId)
         {
             try
             {
@@ -57,7 +58,7 @@ namespace Pin.Discord.Core.Services
             }
         }
 
-        public async Task EditServerName(int serverId,string newName)
+        public async Task EditServerNameAsync(int serverId,string newName)
         {
             try
             {

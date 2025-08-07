@@ -1,6 +1,11 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Pin.Discord.Blazor.Components;
+using Pin.Discord.Blazor.Hubs;
 using Pin.Discord.Core.Data;
+using Pin.Discord.Core.Interfaces;
+using Pin.Discord.Core.Services;
 
 namespace Pin.Discord.Blazor
 {
@@ -15,6 +20,14 @@ namespace Pin.Discord.Blazor
                 .AddInteractiveServerComponents();
 
             builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultDatabase")));
+            builder.Services.AddSignalR();
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie();
+            builder.Services.AddAuthorization();
+            builder.Services.AddScoped<AuthenticationStateProvider, Auth>();
+            builder.Services.AddScoped<IUserService, UserService>();
+
             var app = builder.Build();
 
 
@@ -30,10 +43,10 @@ namespace Pin.Discord.Blazor
 
             app.UseStaticFiles();
             app.UseAntiforgery();
-
+            app.MapHub<ChatHub>("/chathub");
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
-
+       
             app.Run();
         }
     }
