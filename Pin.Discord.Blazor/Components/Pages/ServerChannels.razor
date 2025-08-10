@@ -1,35 +1,64 @@
 ﻿@page "/servers/{ServerId:int}/channels"
 @using Pin.Discord.Core.Entities
 @using Pin.Discord.Core.Interfaces
-@inject IChannelService ChannelService
-@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 
-<div class="discord-layout">
-    <!-- Sidebar: Channel List -->
-    <div class="sidebar">
-        <h4>Channels</h4>
+@inject IServerService ServerService
+@inject IChannelService ChannelService
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager NavManager
+
+<div style="display: flex; height: 100vh;">
+    <!-- Server Sidebar -->
+    <div style="width: 80px; background-color: #202225; display: flex; flex-direction: column; align-items: center; padding: 10px;">
+        <button style="width: 48px; height: 48px; border-radius: 24px; background-color: #5865F2; color: white; font-size: 24px; border: none; margin-bottom: 16px; cursor: pointer;"
+                @onclick="NavigateToDiscover">
+            +
+        </button>
+
+        @if (ServersList == null)
+        {
+            <p style="color: gray;">...</p>
+        }
+        else
+        {
+            @foreach (var server in ServersList)
+            {
+                <div title="@server.ServerName"
+                     @onclick="() => NavigateToServer(server.Id)"
+                     style="width: 48px; height: 48px; border-radius: 24px; background-color: #36393F; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-bottom: 10px; cursor: pointer;">
+                    @server.ServerName[0] <!-- first letter -->
+                </div>
+            }
+        }
+    </div>
+
+    <!-- Channel Sidebar -->
+    <div style="width: 240px; background-color: #2F3136; color: white; display: flex; flex-direction: column;">
+        <h4 style="padding: 10px;">Channels</h4>
         @if (Channels == null)
         {
-            <p>Loading...</p>
+            <p style="padding: 10px;">Loading...</p>
         }
         else
         {
             @foreach (var channel in Channels)
             {
-                <div class="channel-item" @onclick="() => NavigateToChannel(channel.Id)">
+                <div @onclick="() => NavigateToChannel(channel.Id)"
+                     style="padding: 8px 12px; cursor: pointer; color: #b9bbbe;">
                     # @channel.ChannelName
                 </div>
             }
         }
-
-        <div class="add-channel">
-            <input @bind="NewChannelName" placeholder="New channel name" />
-            <button @onclick="AddChannelAsync">+</button>
+        <div style="padding: 10px;">
+            <input @bind="NewChannelName" placeholder="New channel name" style="width: 100%;" />
+            <button @onclick="AddChannelAsync" style="margin-top: 5px;">+</button>
         </div>
     </div>
 
-    <!-- Main Content: Channel Placeholder -->
-    <div class="main-content">
+    <!-- Chat Area -->
+    <div style="flex-grow: 1; background-color: #36393F; color: white; padding: 20px;">
         @if (SelectedChannel != null)
         {
             <h3># @SelectedChannel.ChannelName</h3>
@@ -44,12 +73,25 @@
 
 @code {
     [Parameter] public int ServerId { get; set; }
+    private List<Server> ServersList;
     private List<Channel> Channels;
     private Channel SelectedChannel;
     private string NewChannelName;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!(user.Identity?.IsAuthenticated ?? false))
+        {
+            NavManager.NavigateTo("/login");
+            return;
+        }
+
+        int userId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+        ServersList = (await ServerService.GetServersForUserAsync(userId)).ToList();
         Channels = (await ChannelService.GetChannelsByServerIdAsync(ServerId)).ToList();
     }
 
@@ -66,7 +108,15 @@
     private async Task NavigateToChannel(int channelId)
     {
         SelectedChannel = await ChannelService.GetChannelByChannelId(channelId);
-        // later this can navigate to /channels/{channelId} page with messages
-        // Navigation.NavigateTo($"/channels/{channelId}");
+    }
+
+    private void NavigateToDiscover()
+    {
+        NavManager.NavigateTo("/availableServers");
+    }
+
+    private void NavigateToServer(int serverId)
+    {
+        NavManager.NavigateTo($"/servers/{serverId}/channels");
     }
 }

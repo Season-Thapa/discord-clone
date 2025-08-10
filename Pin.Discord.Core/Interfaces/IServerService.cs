@@ -14,7 +14,7 @@ namespace Pin.Discord.Core.Interfaces
         Task<Server> GetServerByServerIdAsync(int serverId);
         Task<IEnumerable<Server>> GetServersUserNotInAsync(int userId);
         Task JoinServerAsync(int serverId, int userId);
-        Task AddNewServerAsync(string serverName);
+        Task AddNewServerAsync(string serverName, int userId);
         Task DeleteServerAsync(int serverId);
         Task EditServerNameAsync(int serverId, string newName);
     }

@@ -34,15 +34,28 @@ namespace Pin.Discord.Core.Services
                 .Select(sm => sm.Server)
                 .ToListAsync();
         }
-        public async Task AddNewServerAsync(string serverName)
+
+        public async Task AddNewServerAsync(string serverName, int userId)
         {
             try
             {
-                Server newServer = new Server { ServerName = serverName };
+                var newServer = new Server
+                {
+                    ServerName = serverName
+                };
 
-                var createdServer = _context.Servers.Add(newServer);
+                _context.Servers.Add(newServer);
                 await _context.SaveChangesAsync();
 
+                var serverMember = new ServerMember
+                {
+                    ServerId = newServer.Id,
+                    UserId = userId,
+
+                };
+
+                _context.ServerMembers.Add(serverMember);
+                await _context.SaveChangesAsync();
             }
             catch
             {
