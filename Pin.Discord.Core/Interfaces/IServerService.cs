@@ -10,7 +10,10 @@ namespace Pin.Discord.Core.Interfaces
     public interface IServerService
     {
         Task<IEnumerable<Server>> GetAsync();
+        Task<IEnumerable<Server>> GetServersForUserAsync(int userId);
         Task<Server> GetServerByServerIdAsync(int serverId);
+        Task<IEnumerable<Server>> GetServersUserNotInAsync(int userId);
+        Task JoinServerAsync(int serverId, int userId);
         Task AddNewServerAsync(string serverName);
         Task DeleteServerAsync(int serverId);
         Task EditServerNameAsync(int serverId, string newName);

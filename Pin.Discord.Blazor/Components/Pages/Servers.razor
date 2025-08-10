@@ -1,0 +1,68 @@
+﻿@page "/servers"
+@using Pin.Discord.Core.Entities
+@using Pin.Discord.Core.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+
+@inject IServerService ServerService
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager NavManager
+
+<div class="discord-layout" style="display: flex; height: 100vh;">
+    <div class="server-sidebar" style="width: 80px; background-color: #202225; display: flex; flex-direction: column; align-items: center; padding: 10px;">
+        <button class="discover-button" @onclick="NavigateToDiscover"
+                style="width: 48px; height: 48px; border-radius: 24px; border: none; background-color: #5865F2; color: white; font-size: 24px; cursor: pointer; margin-bottom: 16px;">
+            +
+        </button>
+
+        @if (ServersList == null)
+        {
+            <p style="color: gray; text-align: center;">Loading...</p>
+        }
+        else
+        {
+            @foreach (var server in ServersList)
+            {
+                <div class="server-icon"
+                     title="@server.ServerName"
+                     @onclick="() => NavigateToServer(server.Id)"
+                     style="width: 48px; height: 48px; border-radius: 24px; background-color: #36393F; color: white; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; cursor: pointer; font-weight: bold;">
+                    @server.ServerName.Substring(0, 1).ToUpper()
+                </div>
+            }
+        }
+    </div>
+    <div class="server-content" style="flex-grow: 1; background-color: #2F3136; color: white; padding: 20px;">
+        <h3>Select a server</h3>
+    </div>
+</div>
+
+@code {
+    private List<Server> ServersList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated ?? false)
+        {
+            int userId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            ServersList = (await ServerService.GetServersForUserAsync(userId)).ToList();
+        }
+        else
+        {
+            NavManager.NavigateTo("/login");
+        }
+    }
+
+    private void NavigateToServer(int serverId)
+    {
+        NavManager.NavigateTo($"/servers/{serverId}/channels");
+    }
+
+    private void NavigateToDiscover()
+    {
+        NavManager.NavigateTo("/availableServers");
+    }
+}

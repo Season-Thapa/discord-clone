@@ -11,28 +11,26 @@ namespace Pin.Discord.Core.Services
 {
     public class Auth : AuthenticationStateProvider
     {
-        private ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
-        private readonly IHttpContextAccessor _httpContextAccessor;
-
-        public Auth(IHttpContextAccessor httpContextAccessor)
-        {
-            _httpContextAccessor = httpContextAccessor;
-        }
+        private ClaimsPrincipal _currentUser;
+        private readonly ClaimsPrincipal _anonymous = new(new ClaimsIdentity());
 
         public override Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var user = _httpContextAccessor.HttpContext?.User;
-
-            if (user?.Identity != null && user.Identity.IsAuthenticated)
-                return Task.FromResult(new AuthenticationState(user));
-
-            return Task.FromResult(new AuthenticationState(_anonymous));
+            return Task.FromResult(new AuthenticationState(_currentUser ?? _anonymous));
         }
 
-        public void NotifyAuthenticationStateChanged(ClaimsPrincipal user)
+        public void Login(ClaimsPrincipal user)
         {
-            var authState = Task.FromResult(new AuthenticationState(user));
-            NotifyAuthenticationStateChanged(authState);
+            _currentUser = user;
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
+        }
+
+        public void Logout()
+        {
+            _currentUser = null;
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_anonymous)));
         }
     }
+
 }
+

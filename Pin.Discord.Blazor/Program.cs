@@ -27,6 +27,10 @@ namespace Pin.Discord.Blazor
             builder.Services.AddAuthorization();
             builder.Services.AddScoped<AuthenticationStateProvider, Auth>();
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IMessageService, MessageService>();
+            builder.Services.AddScoped<IServerMemberService, ServerMemberService>();
+            builder.Services.AddScoped<IChannelService, ChannelService>();
+            builder.Services.AddScoped<IServerService, ServerService>();
 
             var app = builder.Build();
 
@@ -42,7 +46,9 @@ namespace Pin.Discord.Blazor
             app.UseHttpsRedirection();
 
             app.UseStaticFiles();
-            app.UseAntiforgery();
+            app.UseAntiforgery();    
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.MapHub<ChatHub>("/chathub");
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();

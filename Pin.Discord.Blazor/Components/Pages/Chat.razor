@@ -1,11 +1,14 @@
 ﻿@using Microsoft.AspNetCore.SignalR.Client
+@using Pin.Discord.Core.Entities
+@using Pin.Discord.Core.Interfaces
 @page "/chathub"
 @inject NavigationManager Navigation
+@inject IMessageService messageService
 
 <h3>@CurrentChannelName</h3>
 
 <ul>
-    @foreach (var message in Messages)
+    @foreach (var message in ChatMessages)
     {
         <li><b>@message.UserName</b>: @message.Content</li>
     }
@@ -15,10 +18,10 @@
 
 @code {
     private HubConnection _hub;
-    private List<ChatMessageDto> Messages = new();
+    private List<ChatMessageDto> ChatMessages = new();
     private string NewMessage;
-    private int ChannelId = 1;
-    private string CurrentChannelName = "General";
+    private int ChannelId;
+    private string CurrentChannelName;
 
     protected override async Task OnInitializedAsync()
     {
@@ -27,9 +30,9 @@
             .WithAutomaticReconnect()
             .Build();
 
-        _hub.On<string, string>("ReceiveMessage", (user, message) =>
+        _hub.On<int, string, string>("ReceiveMessage", (channelId, userName, message) =>
         {
-            Messages.Add(new ChatMessageDto { UserName = user, Content = message });
+            ChatMessages.Add(new ChatMessageDto { ChannelId = channelId, UserName = userName, Content = message });
             StateHasChanged();
         });
 
@@ -48,6 +51,7 @@
 
     public class ChatMessageDto
     {
+        public int ChannelId { get; set; }
         public string UserName { get; set; }
         public string Content { get; set; }
     }

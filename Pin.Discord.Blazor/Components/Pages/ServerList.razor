@@ -1,0 +1,59 @@
+﻿@page "/availableServers"
+@using Pin.Discord.Core.Entities
+@using Pin.Discord.Core.Interfaces
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IServerService ServerService
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager NavManager
+
+<h3>Discover Servers</h3>
+
+@if (availableServers == null)
+{
+    <p>Loading...</p>
+}
+else if (!availableServers.Any())
+{
+    <p>You have joined all available servers.</p>
+}
+else
+{
+    <ul>
+        @foreach (var server in availableServers)
+        {
+            <li>
+                @server.ServerName
+                <button @onclick="() => JoinServer(server.Id)">Join</button>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<Server> availableServers;
+    private int currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated ?? false)
+        {
+            currentUserId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            availableServers = (await ServerService.GetServersUserNotInAsync(currentUserId)).ToList();
+        }
+        else
+        {
+            NavManager.NavigateTo("/login");
+        }
+    }
+
+    private async Task JoinServer(int serverId)
+    {
+        await ServerService.JoinServerAsync(serverId, currentUserId);
+        availableServers = (await ServerService.GetServersUserNotInAsync(currentUserId)).ToList();
+    }
+}

@@ -1,0 +1,72 @@
+﻿@page "/servers/{ServerId:int}/channels"
+@using Pin.Discord.Core.Entities
+@using Pin.Discord.Core.Interfaces
+@inject IChannelService ChannelService
+@inject NavigationManager Navigation
+
+<div class="discord-layout">
+    <!-- Sidebar: Channel List -->
+    <div class="sidebar">
+        <h4>Channels</h4>
+        @if (Channels == null)
+        {
+            <p>Loading...</p>
+        }
+        else
+        {
+            @foreach (var channel in Channels)
+            {
+                <div class="channel-item" @onclick="() => NavigateToChannel(channel.Id)">
+                    # @channel.ChannelName
+                </div>
+            }
+        }
+
+        <div class="add-channel">
+            <input @bind="NewChannelName" placeholder="New channel name" />
+            <button @onclick="AddChannelAsync">+</button>
+        </div>
+    </div>
+
+    <!-- Main Content: Channel Placeholder -->
+    <div class="main-content">
+        @if (SelectedChannel != null)
+        {
+            <h3># @SelectedChannel.ChannelName</h3>
+            <p>Messages will go here...</p>
+        }
+        else
+        {
+            <p>Select a channel to start chatting</p>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int ServerId { get; set; }
+    private List<Channel> Channels;
+    private Channel SelectedChannel;
+    private string NewChannelName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Channels = (await ChannelService.GetChannelsByServerIdAsync(ServerId)).ToList();
+    }
+
+    private async Task AddChannelAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(NewChannelName))
+        {
+            var channel = await ChannelService.AddNewChannel(NewChannelName, ServerId);
+            Channels.Add(channel);
+            NewChannelName = string.Empty;
+        }
+    }
+
+    private async Task NavigateToChannel(int channelId)
+    {
+        SelectedChannel = await ChannelService.GetChannelByChannelId(channelId);
+        // later this can navigate to /channels/{channelId} page with messages
+        // Navigation.NavigateTo($"/channels/{channelId}");
+    }
+}

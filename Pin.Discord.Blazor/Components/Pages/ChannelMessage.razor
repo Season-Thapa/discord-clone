@@ -1,0 +1,104 @@
+﻿@page "/channels/{ChannelId:int}"
+@using Pin.Discord.Core.Entities
+@using Pin.Discord.Core.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.SignalR.Client
+@inject IMessageService MessageService
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
+
+<h3>Channel @ChannelId</h3>
+
+<div class="messages-container">
+    @if (Messages == null)
+    {
+        <p>Loading messages...</p>
+    }
+    else
+    {
+        @foreach (var msg in Messages)
+        {
+            <div class="message">
+                <strong>@msg.User.Name:</strong> @msg.MessageContent
+            </div>
+        }
+    }
+</div>
+
+@if (IsAuthenticated)
+{
+    <input @bind="NewMessage" placeholder="Type your message..." @onkeydown="HandleKeyPress" />
+    <button @onclick="SendMessage">Send</button>
+}
+else
+{
+    <p><em>Please log in to send messages.</em></p>
+}
+
+@code {
+    [Parameter] 
+    public int ChannelId { get; set; }
+    private List<Message> Messages;
+    private string NewMessage;
+    private bool IsAuthenticated;
+    private int CurrentUserId;
+    private HubConnection hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        IsAuthenticated = user.Identity.IsAuthenticated;
+
+
+
+        Messages = await MessageService.GetMessagesForChannelAsync(ChannelId);
+
+        // Create hub connection
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+            .Build();
+
+        hubConnection.On<Message>("ReceiveMessage", (message) =>
+        {
+            if (message.ChannelId == ChannelId)
+            {
+                Messages.Add(message);
+                InvokeAsync(StateHasChanged);
+            }
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async Task SendMessage()
+    {
+        if (!string.IsNullOrWhiteSpace(NewMessage))
+        {
+            var message = await MessageService.AddMessageAsync(ChannelId, CurrentUserId, NewMessage);
+
+            // Broadcast to others
+            await hubConnection.SendAsync("SendMessageToChannel", message);
+
+            Messages.Add(message);
+            NewMessage = string.Empty;
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendMessage();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
