@@ -4,36 +4,11 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 
-@inject IServerService ServerService
 @inject IChannelService ChannelService
 @inject AuthenticationStateProvider AuthProvider
 @inject NavigationManager NavManager
 
 <div style="display: flex; height: 100vh;">
-    <!-- Server Sidebar -->
-    <div style="width: 80px; background-color: #202225; display: flex; flex-direction: column; align-items: center; padding: 10px;">
-        <button style="width: 48px; height: 48px; border-radius: 24px; background-color: #5865F2; color: white; font-size: 24px; border: none; margin-bottom: 16px; cursor: pointer;"
-                @onclick="NavigateToDiscover">
-            +
-        </button>
-
-        @if (ServersList == null)
-        {
-            <p style="color: gray;">...</p>
-        }
-        else
-        {
-            @foreach (var server in ServersList)
-            {
-                <div title="@server.ServerName"
-                     @onclick="() => NavigateToServer(server.Id)"
-                     style="width: 48px; height: 48px; border-radius: 24px; background-color: #36393F; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-bottom: 10px; cursor: pointer;">
-                    @server.ServerName[0] <!-- first letter -->
-                </div>
-            }
-        }
-    </div>
-
     <!-- Channel Sidebar -->
     <div style="width: 240px; background-color: #2F3136; color: white; display: flex; flex-direction: column;">
         <h4 style="padding: 10px;">Channels</h4>
@@ -73,12 +48,11 @@
 
 @code {
     [Parameter] public int ServerId { get; set; }
-    private List<Server> ServersList;
     private List<Channel> Channels;
     private Channel SelectedChannel;
     private string NewChannelName;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         var authState = await AuthProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -91,8 +65,8 @@
 
         int userId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-        ServersList = (await ServerService.GetServersForUserAsync(userId)).ToList();
         Channels = (await ChannelService.GetChannelsByServerIdAsync(ServerId)).ToList();
+        SelectedChannel = null; // Reset selected channel when switching servers
     }
 
     private async Task AddChannelAsync()
@@ -108,15 +82,5 @@
     private async Task NavigateToChannel(int channelId)
     {
         SelectedChannel = await ChannelService.GetChannelByChannelId(channelId);
-    }
-
-    private void NavigateToDiscover()
-    {
-        NavManager.NavigateTo("/availableServers");
-    }
-
-    private void NavigateToServer(int serverId)
-    {
-        NavManager.NavigateTo($"/servers/{serverId}/channels");
     }
 }

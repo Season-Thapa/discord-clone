@@ -1,35 +1,78 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Pin.Discord.Blazor</a>
-    </div>
-</div>
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Pin.Discord.Core.Entities
+@using Pin.Discord.Core.Interfaces
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+@inject IServerService ServerService
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager NavManager
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+<AuthorizeView>
+    <Authorized>
+            <!-- Sidebar -->
+            <div class="d-flex flex-column align-items-center p-2" style="width: 80px; background-color: #202225; height: 100vh;">
+                <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="NavigateToDiscover">+</button>
+
+                @if (ServersList == null)
+                {
+                    <p class="text-muted small text-center">Loading...</p>
+                }
+                else
+                {
+                    @foreach (var server in ServersList)
+                    {
+                        <div class="d-flex justify-content-center align-items-center bg-secondary text-white rounded-circle mb-3"
+                             title="@server.ServerName"
+                             @onclick="() => NavigateToServer(server.Id)"
+                             style="width: 48px; height: 48px; cursor: pointer; font-weight: 700; font-size: 16px;">
+                            @server.ServerName.Substring(0, 1).ToUpper()
+                        </div>
+                    }
+                }
+            </div>
+    </Authorized>
+
+    <NotAuthorized>
+        <div class="p-3 bg-dark">
+            <NavLink href="/login" class="text-primary text-decoration-none">Login</NavLink>
         </div>
+    </NotAuthorized>
+</AuthorizeView>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
+@code {
+    private List<Server> ServersList;
+    private int currentUserId;
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="chathub">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> ChatHub
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="login">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Login
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    protected override async Task OnInitializedAsync()
+    {
+        AuthProvider.AuthenticationStateChanged += async _ => await ReloadDataAsync();
+        await ReloadDataAsync();
+    }
 
+    private async Task ReloadDataAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated ?? false)
+        {
+            currentUserId = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            ServersList = (await ServerService.GetServersForUserAsync(currentUserId)).ToList();
+        }
+        else
+        {
+            ServersList = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private void NavigateToServer(int serverId)
+    {
+        NavManager.NavigateTo($"/servers/{serverId}/channels");
+    }
+
+    private void NavigateToDiscover()
+    {
+        NavManager.NavigateTo("/availableServers");
+    }
+}
