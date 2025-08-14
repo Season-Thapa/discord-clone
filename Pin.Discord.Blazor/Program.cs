@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.ResponseCompression;
 using Pin.Discord.Blazor.Components;
+using Pin.Discord.Blazor.Hubs;
 
 namespace Pin.Discord.Blazor
 {
@@ -11,7 +13,11 @@ namespace Pin.Discord.Blazor
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
-
+            
+            builder.Services.AddResponseCompression(opts =>
+            {
+                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/octet-stream" });
+            });
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -26,7 +32,7 @@ namespace Pin.Discord.Blazor
 
             app.UseStaticFiles();
             app.UseAntiforgery();
-
+            app.MapHub<ChatHub>("/chathub");
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
 
