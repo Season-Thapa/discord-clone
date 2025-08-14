@@ -19,8 +19,10 @@ namespace Pin.Discord.Blazor
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultDatabase")));
             builder.Services.AddSignalR();
+
+
+            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultDatabase")));
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie();
@@ -50,7 +52,6 @@ namespace Pin.Discord.Blazor
 
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.MapHub<ChatHub>("/chathub");
 
             app.MapRazorComponents<App>()
