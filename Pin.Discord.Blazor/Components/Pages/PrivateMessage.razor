@@ -48,17 +48,18 @@
         SelectedUser = await UserService.GetByIdAsync(SelectedUserId);
         // Setup SignalR hub
         hubConnection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
-            .Build();
+     .WithUrl(Navigation.ToAbsoluteUri($"/chathub?userId={CurrentUserId}"))
+     .Build();
 
-        hubConnection.On<string,string>("ReceiveMessage", (userName,newMessage) =>
+        hubConnection.On<string,string>("ReceiveMessage", async (userId, newMessage) =>
         {
+            var user = await UserService.GetByIdAsync(int.Parse(userId));
             ChatMessages.Add(new ChatMessage
             {
-                Username = userName,
+                Username = user.Name,
                 Message = newMessage
             });
-            InvokeAsync(StateHasChanged);
+            await InvokeAsync(StateHasChanged);
         });
 
         await hubConnection.StartAsync();
@@ -69,8 +70,8 @@
         if (string.IsNullOrWhiteSpace(newMessage)) return;
 
         var currentUser = await UserService.GetByIdAsync(CurrentUserId);
-      
-        await hubConnection.SendAsync("SendMessage",SelectedUser.Name, currentUser.Name, newMessage);
+
+        await hubConnection.SendAsync("SendMessage", SelectedUserId, CurrentUserId, newMessage);
 
         newMessage = string.Empty;
     }

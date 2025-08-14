@@ -5,9 +5,16 @@ namespace Pin.Discord.Blazor.Hubs
 {
     public class ChatHub : Hub
     {
-        public async Task SendMessage(string toUser,string fromUser, string message)
+ 
+        public async Task SendMessage(int toUserId, int fromUserId, string message)
         {
-            await Clients.Client(toUser).SendAsync("ReceiveMessage",fromUser, message);
+            // Send to recipient
+            await Clients.User(toUserId.ToString())
+                .SendAsync("ReceiveMessage", fromUserId.ToString(), message);
+
+            // Optionally send to sender as well (to show message instantly in their chat)
+            await Clients.User(fromUserId.ToString())
+                .SendAsync("ReceiveMessage", fromUserId.ToString(), message);
         }
         public async Task SendMessageToGroup(string groupName, ChatMessage message)
         {
