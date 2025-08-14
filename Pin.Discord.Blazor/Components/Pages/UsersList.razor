@@ -1,0 +1,53 @@
+﻿@page "/users/{CurrentUserId:int}"
+
+@using Pin.Discord.Core.Entities
+@using Pin.Discord.Core.Interfaces
+
+
+@inject IUserService UserService
+
+@inject NavigationManager NavManager
+
+<div style="display: flex; height: 100vh;">
+    <!-- Channel Sidebar -->
+    <div style="width: 240px; background-color: #2F3136; color: white; display: flex; flex-direction: column;">
+        <h4 style="padding: 10px;">Message User</h4>
+@if (AvailableUsers == null)
+        {
+        <p style="padding: 10px;">
+            Loading...</p>
+        }
+        else
+        {
+@foreach (var user in AvailableUsers)
+            {
+            <div  @onclick="() => MessageToPerson(user.Id)"
+                 style="padding: 8px 12px; cursor: pointer; color: #b9bbbe;">
+@user.Name
+                </div>
+}
+}
+</div>
+
+</div>
+
+
+@code {
+    [Parameter]
+    public int CurrentUserId { get; set; }
+    private List<User> AvailableUsers;
+
+    protected override async Task OnParametersSetAsync()
+    {
+
+        AvailableUsers = (await UserService.GetUserNotInAsync(CurrentUserId)).ToList();
+    }
+
+    private async Task MessageToPerson(int selectedUserId)
+    {
+        NavManager.NavigateTo($"/message/currentuser/{CurrentUserId}/selecteduser/{selectedUserId}");
+
+    }
+
+}
+
