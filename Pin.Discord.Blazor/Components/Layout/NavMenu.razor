@@ -7,37 +7,41 @@
 @inject IServerService ServerService
 @inject NavigationManager NavManager
 
-@if (UserState.IsLoggedIn)
-{
-   <!-- Sidebar -->
 <div class="d-flex flex-column align-items-center p-2" style="width: 80px; background-color: #202225; height: 100vh;">
-    <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="NavigateToDiscover">+</button>
-    <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="AvailableUsers">M</button>
+    @if (UserState.IsLoggedIn)
+    {
+        <!-- Sidebar -->
+        <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="NavigateToDiscover">+</button>
+        <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="AvailableUsers">M</button>
 
-@if (ServersList == null)
+        @if (ServersList == null)
         {
-    <p class="text-muted small text-center">Loading...</p>
+            <p class="text-muted small text-center">Loading...</p>
         }
         else
         {
-@foreach (var server in ServersList)
+            @foreach (var server in ServersList)
             {
-    <div class="d-flex justify-content-center align-items-center bg-secondary text-white rounded-circle mb-3"
-         title="@server.ServerName"
-         @onclick="() => NavigateToServer(server.Id)"
-         style="width: 48px; height: 48px; cursor: pointer; font-weight: 700; font-size: 16px;">
-@server.ServerName.Substring(0, 1).ToUpper()
+                <div class="d-flex justify-content-center align-items-center bg-secondary text-white rounded-circle mb-3"
+                     title="@server.ServerName"
+                     @onclick="() => NavigateToServer(server.Id)"
+                     style="width: 48px; height: 48px; cursor: pointer; font-weight: 700; font-size: 16px;">
+                    @server.ServerName.Substring(0, 1).ToUpper()
+                </div>
+            }
+        }
+
+    }
+    else
+    {
+        <div class="p-3 bg-dark">
+            <NavLink href="/login" class="text-primary text-decoration-none">Login</NavLink>
+        </div>
+        <div class="p-3 bg-dark">
+            <NavLink href="/register" class="text-primary text-decoration-none">Register</NavLink>
+        </div>
+    }
 </div>
-}
-}
-</div>
-}
-else
-{
-<div class="p-3 bg-dark">
-    <NavLink href="/login" class="text-primary text-decoration-none">Login</NavLink>
-</div>
-}
 
 
 
@@ -62,7 +66,7 @@ else
 
     private void NavigateToDiscover()
     {
-        NavManager.NavigateTo("/availableServers");
+        NavManager.NavigateTo($"/user/{CurrentUserId}/availableServers");
     }
     private void AvailableUsers()
     {
