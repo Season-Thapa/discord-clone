@@ -81,6 +81,6 @@
 
     private async Task NavigateToChannel(int channelId)
     {
-        SelectedChannel = await ChannelService.GetChannelByChannelId(channelId);
+        NavManager.NavigateTo($"/channels/{channelId}");
     }
 }

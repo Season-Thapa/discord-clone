@@ -9,26 +9,28 @@
 <AuthorizeView>
     <Authorized>
             <!-- Sidebar -->
-            <div class="d-flex flex-column align-items-center p-2" style="width: 80px; background-color: #202225; height: 100vh;">
-                <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="NavigateToDiscover">+</button>
+        <div class="d-flex flex-column align-items-center p-2" style="width: 80px; background-color: #202225; height: 100vh;">
+            <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="NavigateToDiscover">+</button>
+            <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="AvailableUsers">M</button>
 
-                @if (ServersList == null)
+
+            @if (ServersList == null)
+            {
+                <p class="text-muted small text-center">Loading...</p>
+            }
+            else
+            {
+                @foreach (var server in ServersList)
                 {
-                    <p class="text-muted small text-center">Loading...</p>
+                    <div class="d-flex justify-content-center align-items-center bg-secondary text-white rounded-circle mb-3"
+                         title="@server.ServerName"
+                         @onclick="() => NavigateToServer(server.Id)"
+                         style="width: 48px; height: 48px; cursor: pointer; font-weight: 700; font-size: 16px;">
+                        @server.ServerName.Substring(0, 1).ToUpper()
+                    </div>
                 }
-                else
-                {
-                    @foreach (var server in ServersList)
-                    {
-                        <div class="d-flex justify-content-center align-items-center bg-secondary text-white rounded-circle mb-3"
-                             title="@server.ServerName"
-                             @onclick="() => NavigateToServer(server.Id)"
-                             style="width: 48px; height: 48px; cursor: pointer; font-weight: 700; font-size: 16px;">
-                            @server.ServerName.Substring(0, 1).ToUpper()
-                        </div>
-                    }
-                }
-            </div>
+            }
+        </div>
     </Authorized>
 
     <NotAuthorized>
@@ -74,5 +76,10 @@
     private void NavigateToDiscover()
     {
         NavManager.NavigateTo("/availableServers");
+    }
+    private void AvailableUsers()
+    {
+        NavManager.NavigateTo($"/users/{currentUserId}");
+
     }
 }

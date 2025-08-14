@@ -46,13 +46,20 @@ namespace Pin.Discord.Blazor
             app.UseHttpsRedirection();
 
             app.UseStaticFiles();
-            app.UseAntiforgery();    
+            app.UseRouting();
+
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.MapHub<ChatHub>("/chathub");
+
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
-       
+
+
+            app.UseAntiforgery();
+
+
             app.Run();
         }
     }

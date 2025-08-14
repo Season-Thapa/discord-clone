@@ -47,7 +47,6 @@
         if (user != null)
         {
             SuccessMessage = "Registration successful! Redirecting to login...";
-            await Task.Delay(1500);
             Navigation.NavigateTo("/login");
         }
         else

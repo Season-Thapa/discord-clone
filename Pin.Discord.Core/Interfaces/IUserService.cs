@@ -14,5 +14,6 @@ namespace Pin.Discord.Core.Interfaces
         Task<User> GetByIdAsync(int id);
         Task<User> GetByNameAsync(string name);
         Task<List<User>> GetAllUsersAsync();
+        Task<IEnumerable<User>> GetUserNotInAsync(int userId);
     }
 }

@@ -1,0 +1,94 @@
+﻿@page "/message/user/{SelectedUserId:int}"
+@using Pin.Discord.Core.Entities
+@using Pin.Discord.Core.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.SignalR.Client
+@using Pin.Discord.Blazor.Models
+
+@inject IUserService UserService
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+
+<h3>@SelectedUser?.Name</h3>
+
+<div class="messages-container">
+    @if (!ChatMessages.Any())
+    {
+        <p>No messages yet, start chatting!</p>
+    }  
+        @foreach (var msg in ChatMessages)
+        {
+            <div class="message">
+                <strong>@msg.UserName:</strong> @msg.MessageContent
+            </div>
+        }
+ 
+</div>
+
+@if (IsAuthenticated)
+{
+    <input @bind="newMessage" placeholder="Type your message..." />
+    <button @onclick="Send" disabled="@(!IsConnected)">Send</button>
+}
+else
+{
+    <p><em>Please wait for hub ready</em></p>
+}
+
+@code {
+    [Parameter]
+    public int SelectedUserId { get; set; }
+    private User SelectedUser { get; set; }
+    private List<ChatMessage> ChatMessages = new();
+    private string newMessage;
+    private bool IsAuthenticated;
+    private int CurrentUserId;
+    private HubConnection hubConnection;
+    public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        SelectedUser = await UserService.GetByIdAsync(SelectedUserId);
+
+        IsAuthenticated = user.Identity.IsAuthenticated;
+        if (IsAuthenticated)
+        {
+            CurrentUserId = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value);
+        }
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+        {
+            ChatMessages.Add(new ChatMessage { UserName = user, MessageContent = message, ChannelId = "" });
+            StateHasChanged();
+
+        });
+        await hubConnection.StartAsync();
+    }
+
+    private async Task Send()
+    {
+        if (!string.IsNullOrWhiteSpace(newMessage))
+        {
+            var user = await UserService.GetByIdAsync(CurrentUserId);
+            await hubConnection.SendAsync("SendMessage", user.Name, newMessage);
+            newMessage = string.Empty;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
