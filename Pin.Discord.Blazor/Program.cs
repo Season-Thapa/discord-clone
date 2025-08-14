@@ -15,18 +15,24 @@ namespace Pin.Discord.Blazor
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddRazorComponents()
-                .AddInteractiveServerComponents();
+            // Add services
+            builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
-            builder.Services.AddSignalR();
+            builder.Services.AddDbContext<ApplicationDbContext>(
+                options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultDatabase"))
+            );
 
-
-            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultDatabase")));
             builder.Services.AddHttpContextAccessor();
+
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie();
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/login";
+                    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                });
+
             builder.Services.AddAuthorization();
+
             builder.Services.AddScoped<AuthenticationStateProvider, Auth>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IMessageService, MessageService>();
@@ -36,32 +42,28 @@ namespace Pin.Discord.Blazor
 
             var app = builder.Build();
 
-
-            // Configure the HTTP request pipeline.
+            // Configure middleware
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
             app.UseHttpsRedirection();
-
             app.UseStaticFiles();
             app.UseRouting();
 
             app.UseAuthentication();
             app.UseAuthorization();
-            app.MapHub<ChatHub>("/chathub");
 
-            app.MapRazorComponents<App>()
-                .AddInteractiveServerRenderMode();
+            // Require authenticated users for chat hub
+            app.MapHub<ChatHub>("/chathub").RequireAuthorization();
 
-
+            app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
             app.UseAntiforgery();
 
-
             app.Run();
+
         }
     }
 }

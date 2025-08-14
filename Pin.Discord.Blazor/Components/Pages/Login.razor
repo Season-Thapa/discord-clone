@@ -37,18 +37,18 @@
         if (user != null)
         {
             var claims = new[]
-            {
-            new Claim(ClaimTypes.Name, user.Name),
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
-        };
+         {
+                new Claim(ClaimTypes.Name, user.Name),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+            };
 
-            var identity = new ClaimsIdentity(claims, "FakeAuth");
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
 
-            if (AuthProvider is Auth customAuth)
-            {
-                customAuth.Login(principal);
-            }
+            await _httpContextAccessor.HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties { IsPersistent = true });
             Navigation.NavigateTo($"/");
         }
         else
