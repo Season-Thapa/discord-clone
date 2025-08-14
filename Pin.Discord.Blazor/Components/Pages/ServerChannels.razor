@@ -1,11 +1,8 @@
 ﻿@page "/servers/{ServerId:int}/channels"
 @using Pin.Discord.Core.Entities
 @using Pin.Discord.Core.Interfaces
-@using Microsoft.AspNetCore.Components.Authorization
-@using System.Security.Claims
 
 @inject IChannelService ChannelService
-@inject AuthenticationStateProvider AuthProvider
 @inject NavigationManager NavManager
 
 <div style="display: flex; height: 100vh;">
@@ -54,17 +51,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (!(user.Identity?.IsAuthenticated ?? false))
-        {
-            NavManager.NavigateTo("/login");
-            return;
-        }
-
-        int userId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
+       
         Channels = (await ChannelService.GetChannelsByServerIdAsync(ServerId)).ToList();
         SelectedChannel = null; // Reset selected channel when switching servers
     }

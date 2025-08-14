@@ -1,13 +1,11 @@
-﻿@page "/channels/{ChannelId:int}"
+﻿@*@page "/channels/{ChannelId:int}"
 @using Pin.Discord.Core.Entities
 @using Pin.Discord.Core.Interfaces
-@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.SignalR.Client
 @using Pin.Discord.Blazor.Models
 
 @inject IChannelService ChannelService
 @inject IUserService UserService
-@inject AuthenticationStateProvider AuthProvider
 @inject NavigationManager Navigation
 
 <h3>@CurrentChannel?.ChannelName</h3>
@@ -50,8 +48,7 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+
 
         IsAuthenticated = user.Identity.IsAuthenticated;
         if (IsAuthenticated)
@@ -128,4 +125,4 @@ else
             await hubConnection.DisposeAsync();
         }
     }
-}
+}*@

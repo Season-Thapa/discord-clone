@@ -1,4 +1,4 @@
-
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Pin.Discord.Blazor.Components;
 using Pin.Discord.Blazor.Hubs;
@@ -16,8 +16,12 @@ namespace Pin.Discord.Blazor
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services
-            builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-
+            builder.Services.AddRazorComponents()
+                .AddInteractiveServerComponents();
+            builder.Services.AddResponseCompression(opts =>
+            {
+                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/octet-stream" });
+            });
             builder.Services.AddDbContext<ApplicationDbContext>(
                 options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultDatabase"))
             );
@@ -46,7 +50,8 @@ namespace Pin.Discord.Blazor
 
             app.MapHub<ChatHub>("/chathub");
 
-            app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+            app.MapRazorComponents<App>()
+                .AddInteractiveServerRenderMode();
 
             app.Run();
 
