@@ -51,10 +51,10 @@
             .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
             .Build();
 
-        hubConnection.On<string, string>("ReceiveMessage", (userName, newMessage) =>
+        hubConnection.On<string,string>("ReceiveMessage", (userName,newMessage) =>
         {
             ChatMessages.Add(new ChatMessage
-            {            
+            {
                 Username = userName,
                 Message = newMessage
             });
@@ -69,7 +69,8 @@
         if (string.IsNullOrWhiteSpace(newMessage)) return;
 
         var currentUser = await UserService.GetByIdAsync(CurrentUserId);
-        await hubConnection.SendAsync("SendMessage", currentUser.Name, newMessage);
+      
+        await hubConnection.SendAsync("SendMessage",SelectedUser.Name, currentUser.Name, newMessage);
 
         newMessage = string.Empty;
     }

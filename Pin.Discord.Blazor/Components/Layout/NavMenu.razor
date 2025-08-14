@@ -57,7 +57,7 @@ else
     }
     private void NavigateToServer(int serverId)
     {
-        NavManager.NavigateTo($"/servers/{serverId}/channels");
+        NavManager.NavigateTo($"/user/{CurrentUserId}/servers/{serverId}/channels");
     }
 
     private void NavigateToDiscover()
