@@ -1,4 +1,4 @@
-﻿@page "/message/user/{SelectedUserId:int}"
+﻿@page "/message/currentuser/{CurrentUserId:int}/selecteduser/{SelectedUserId:int}"
 @using Pin.Discord.Core.Entities
 @using Pin.Discord.Core.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
@@ -41,35 +41,23 @@ else
 @code {
     [Parameter]
     public int SelectedUserId { get; set; }
+    [Parameter]
+    public int CurrentUserId { get; set; }
 
     private User SelectedUser { get; set; }
     private List<ChatMessage> ChatMessages = new();
     private string newMessage;
     private bool IsAuthenticated;
-    private int CurrentUserId;
     private HubConnection hubConnection;
 
     public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        IsAuthenticated = user.Identity?.IsAuthenticated ?? false;
-
-        if (!IsAuthenticated)
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
-        CurrentUserId = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value);
         SelectedUser = await UserService.GetByIdAsync(SelectedUserId);
-
         // Setup SignalR hub
         hubConnection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("/chathub")) // Cookie-based auth automatically included
+            .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
             .WithAutomaticReconnect()
             .Build();
 

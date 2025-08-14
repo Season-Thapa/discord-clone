@@ -56,9 +56,6 @@ namespace Pin.Discord.Core.Services
             return await _context.Users
              .Where(u => u.Id != userId) 
              .ToListAsync();
-
-
-
         }
      
         public async Task<List<User>> GetAllUsersAsync()

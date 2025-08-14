@@ -1,15 +1,9 @@
 ﻿@page "/login"
 @using Pin.Discord.Core.Interfaces
-@using Pin.Discord.Core.Services
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Authentication;
-@using Microsoft.AspNetCore.Authentication.Cookies;
-
+@using Pin.Discord.Core.Services.State;
 @inject IUserService UserService
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthProvider
-@inject IHttpContextAccessor _httpContextAccessor
+@inject UserState UserState
 
 <h3>Login</h3>
 
@@ -18,12 +12,11 @@
     <p style="color:red">@ErrorMessage</p>
 }
 
-<input @bind="Username" placeholder="Gebruikersnaam" />
+<input @bind="Username" placeholder="Username" />
 <br />
-<input @bind="Password" type="password" placeholder="Wachtwoord" />
+<input @bind="Password" type="password" placeholder="Password" />
 <br />
 <button @onclick="LoginAsync">Login</button>
-<button @onclick="NavigateToRegister">Register</button>
 
 @code {
     private string Username;
@@ -35,29 +28,13 @@
         var user = await UserService.AuthenticateAsync(Username, Password);
 
         if (user != null)
-        {
-            var claims = new[]
-         {
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
-            };
-
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
-
-            await _httpContextAccessor.HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                principal,
-                new AuthenticationProperties { IsPersistent = true });
+        {            
+            UserState.CurrentUserId = user.Id;
             Navigation.NavigateTo($"/");
         }
         else
         {
-            ErrorMessage = "Ongeldige inloggegevens";
+            ErrorMessage = "Invalid credentials";
         }
-    }
-    private void NavigateToRegister()
-    {
-        Navigation.NavigateTo("/register");
     }
 }

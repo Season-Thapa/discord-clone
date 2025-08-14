@@ -1,23 +1,40 @@
 ﻿@inherits LayoutComponentBase
-
-<div class="page d-flex" style="height: 100vh; background-color: #202225;">
-    <div class="sidebar" style="width: 80px; background-color: #202225;">
-        <NavMenu />
-    </div>
-
-    <main class="flex-grow-1" style="background-color: #2F3136; color: white; overflow-y: auto;">
-        <div class="top-row px-4" style="padding: 1rem; background-color: #2F3136;">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank" style="color: white;">About</a>
+@using Pin.Discord.Core.Services.State;
+@inject UserState UserState
+    <div class="page d-flex" style="height: 100vh; background-color: #202225;">
+        <div class="sidebar" style="width: 80px; background-color: #202225;">
+            @if (UserState.IsLoggedIn)
+            {
+                <div class="sidebar" style="width: 80px; background-color: #202225;">
+                    <NavMenu CurrentUserId="@UserState.CurrentUserId" />
+                </div>
+            }
+            else
+            {
+                <div class="p-3 bg-dark">
+                    <NavLink href="/login" class="text-primary text-decoration-none">Login</NavLink>
+                </div>
+            }
         </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+        <main class="flex-grow-1" style="background-color: #2F3136; color: white; overflow-y: auto;">
+            <div class="top-row px-4" style="padding: 1rem; background-color: #2F3136;">
+                <a href="https://learn.microsoft.com/aspnet/core/" target="_blank" style="color: white;">About</a>
+            </div>
 
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
-</div>
+            <article class="content px-4">
+                @Body
+            </article>
+        </main>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    @code {
+        public int CurrentUserId { get; set; } = 0; // Default 0 = not logged in
+
+        // You can update this property after login
+    }

@@ -1,11 +1,11 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Components.Authorization;
+
 using Microsoft.EntityFrameworkCore;
 using Pin.Discord.Blazor.Components;
 using Pin.Discord.Blazor.Hubs;
 using Pin.Discord.Core.Data;
 using Pin.Discord.Core.Interfaces;
 using Pin.Discord.Core.Services;
+using Pin.Discord.Core.Services.State;
 
 namespace Pin.Discord.Blazor
 {
@@ -22,23 +22,12 @@ namespace Pin.Discord.Blazor
                 options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultDatabase"))
             );
 
-            builder.Services.AddHttpContextAccessor();
-
-            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options =>
-                {
-                    options.LoginPath = "/login";
-                    options.ExpireTimeSpan = TimeSpan.FromHours(8);
-                });
-
-            builder.Services.AddAuthorization();
-
-            builder.Services.AddScoped<AuthenticationStateProvider, Auth>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IMessageService, MessageService>();
             builder.Services.AddScoped<IServerMemberService, ServerMemberService>();
             builder.Services.AddScoped<IChannelService, ChannelService>();
             builder.Services.AddScoped<IServerService, ServerService>();
+            builder.Services.AddScoped<UserState>();
 
             var app = builder.Build();
 
@@ -51,16 +40,13 @@ namespace Pin.Discord.Blazor
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-            app.UseRouting();
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+            app.UseAntiforgery();
 
-            // Require authenticated users for chat hub
-            app.MapHub<ChatHub>("/chathub").RequireAuthorization();
+
+            app.MapHub<ChatHub>("/chathub");
 
             app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
-            app.UseAntiforgery();
 
             app.Run();
 
