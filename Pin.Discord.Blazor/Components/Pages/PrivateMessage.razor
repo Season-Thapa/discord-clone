@@ -1,4 +1,4 @@
-﻿@page "/message/currentuser/{CurrentUserId:int}/selecteduser/{SelectedUserId:int}"
+﻿@page "/users/chat/{CurrentUserId:int}"
 @using Pin.Discord.Core.Entities
 @using Pin.Discord.Core.Interfaces
 @using Microsoft.AspNetCore.SignalR.Client
@@ -8,72 +8,114 @@
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
-<h3>@SelectedUser?.Name</h3>
-
-<div class="messages-container">
-    @if (!ChatMessages.Any())
-    {
-        <p>No messages yet, start chatting!</p>
-    }
-    else
-    {
-        @foreach (var msg in ChatMessages)
+<div style="display: flex; height: 100vh;">
+    <!-- Sidebar: List of Users -->
+    <div style="width: 240px; background-color: #2F3136; color: white; display: flex; flex-direction: column;">
+        <h4 style="padding: 10px;">Message User</h4>
+        @if (AvailableUsers == null)
         {
-            <div class="message">
-                <strong>@msg.Username:</strong> @msg.Message
+            <p style="padding: 10px;">No users</p>
+        }
+        else
+        {
+            @foreach (var user in AvailableUsers)
+            {
+                <div @onclick="() => SelectUser(user)"
+                     style="padding: 8px 12px; cursor: pointer; color: @(user == SelectedUser ? "white" : "#b9bbbe")">
+                    @user.Name
+                </div>
+            }
+        }
+    </div>
+
+    <!-- Chat Panel -->
+    <div style="flex-grow: 1; background-color: #36393F; color: white; padding: 20px;">
+        @if (SelectedUser != null)
+        {
+            <h3>@SelectedUser.Name</h3>
+
+            <div class="messages-container" style="max-height: calc(100vh - 150px); overflow-y: auto;">
+                @if (!ChatMessages.Any())
+                {
+                    <p>No messages yet, start chatting!</p>
+                }
+                else
+                {
+                    @foreach (var msg in ChatMessages)
+                    {
+                        <div class="message">
+                            <strong>@msg.Username:</strong> @msg.Message
+                        </div>
+                    }
+                }
+            </div>
+
+            <div style="margin-top: 10px;">
+                <input @bind="newMessage" placeholder="Type your message..."
+                       style="flex: 1; padding: 8px; border-radius: 4px; border: none;" />
+                <button @onclick="Send">Send</button>
             </div>
         }
-    }
+        else
+        {
+            <p>Select a user to start chatting.</p>
+        }
+    </div>
+
 </div>
-<input @bind="newMessage" placeholder="Type your message..." />
-<button @onclick="Send" disabled="@(!IsConnected)">Send</button>
-
-
 
 @code {
     [Parameter]
-    public int SelectedUserId { get; set; }
-    [Parameter]
     public int CurrentUserId { get; set; }
-    private HubConnection hubConnection;
 
+    private List<User> AvailableUsers;
+    private User SelectedUser;
     private List<ChatMessage> ChatMessages = new();
-    private User SelectedUser { get; set; }
+    private HubConnection hubConnection;
     private string newMessage;
 
     public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
 
     protected override async Task OnInitializedAsync()
-    {
-        SelectedUser = await UserService.GetByIdAsync(SelectedUserId);
-        // Setup SignalR hub
+    {        // Setup SignalR connection
         hubConnection = new HubConnectionBuilder()
-     .WithUrl(Navigation.ToAbsoluteUri($"/chathub?userId={CurrentUserId}"))
-     .Build();
+            .WithUrl(Navigation.ToAbsoluteUri($"/chathub?userId={CurrentUserId}"))
+            .Build();
 
-        hubConnection.On<string,string>("ReceiveMessage", async (userId, newMessage) =>
+        hubConnection.On<string, string>("ReceiveMessage", async (userId, message) =>
         {
-            var user = await UserService.GetByIdAsync(int.Parse(userId));
+            var sender = await UserService.GetByIdAsync(int.Parse(userId));
             ChatMessages.Add(new ChatMessage
             {
-                Username = user.Name,
-                Message = newMessage
+                Username = sender.Name,
+                Message = message
             });
             await InvokeAsync(StateHasChanged);
         });
 
         await hubConnection.StartAsync();
     }
+    protected override async Task OnParametersSetAsync()
+    {
+        AvailableUsers = (await UserService.GetUserNotInAsync(CurrentUserId)).ToList();
+        SelectedUser = null;
+        ChatMessages.Clear();
+    }
+    private async Task SelectUser(User user)
+    {
+        SelectedUser = user;
+        ChatMessages.Clear();
+    }
 
     private async Task Send()
     {
-        if (string.IsNullOrWhiteSpace(newMessage)) return;
+        if (string.IsNullOrWhiteSpace(newMessage) || SelectedUser == null) return;
 
-        var currentUser = await UserService.GetByIdAsync(CurrentUserId);
 
-        await hubConnection.SendAsync("SendMessage", SelectedUserId, CurrentUserId, newMessage);
-
+        await hubConnection.SendAsync("SendMessage", SelectedUser.Id, CurrentUserId, newMessage);
         newMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+
     }
 
     public async ValueTask DisposeAsync()

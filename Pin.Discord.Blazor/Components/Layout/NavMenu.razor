@@ -61,7 +61,7 @@
     }
     private void NavigateToServer(int serverId)
     {
-        NavManager.NavigateTo($"/user/{CurrentUserId}/servers/{serverId}/channels");
+        NavManager.NavigateTo($"/user/{CurrentUserId}/servers/{serverId}");
     }
 
     private void NavigateToDiscover()
@@ -70,7 +70,7 @@
     }
     private void AvailableUsers()
     {
-        NavManager.NavigateTo($"/users/{CurrentUserId}");
+        NavManager.NavigateTo($"/users/chat/{CurrentUserId}");
 
     }
     }
