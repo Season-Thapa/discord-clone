@@ -35,15 +35,15 @@
             <h3>@SelectedUser.Name</h3>
 
             <div class="messages-container" style="max-height: calc(100vh - 150px); overflow-y: auto;">
-                @if (!ChatMessages.Any())
+                @if (!MessagesByUser[SelectedUser.Id].Any())
                 {
                     <p>No messages yet, start chatting!</p>
                 }
                 else
                 {
-                    @foreach (var msg in ChatMessages)
+                    @foreach (var msg in MessagesByUser[SelectedUser.Id])
                     {
-                        <div class="message">
+                        <div>
                             <strong>@msg.Username:</strong> @msg.Message
                         </div>
                     }
@@ -67,7 +67,7 @@
 @code {
     [Parameter]
     public int CurrentUserId { get; set; }
-
+    private Dictionary<int, List<ChatMessage>> MessagesByUser = new();
     private List<User> AvailableUsers;
     private User SelectedUser;
     private List<ChatMessage> ChatMessages = new();
@@ -77,7 +77,7 @@
     public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
 
     protected override async Task OnInitializedAsync()
-    {        // Setup SignalR connection
+    {
         hubConnection = new HubConnectionBuilder()
             .WithUrl(Navigation.ToAbsoluteUri($"/chathub?userId={CurrentUserId}"))
             .Build();
@@ -85,12 +85,18 @@
         hubConnection.On<string, string>("ReceiveMessage", async (userId, message) =>
         {
             var sender = await UserService.GetByIdAsync(int.Parse(userId));
-            ChatMessages.Add(new ChatMessage
+            if (!MessagesByUser.ContainsKey(sender.Id))
+                MessagesByUser[sender.Id] = new List<ChatMessage>();
+            MessagesByUser[sender.Id].Add(new ChatMessage
             {
                 Username = sender.Name,
                 Message = message
             });
-            await InvokeAsync(StateHasChanged);
+
+            if (SelectedUser != null && sender.Id == SelectedUser.Id)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
         });
 
         await hubConnection.StartAsync();
@@ -104,13 +110,23 @@
     private async Task SelectUser(User user)
     {
         SelectedUser = user;
-        ChatMessages.Clear();
+
+        if (!MessagesByUser.ContainsKey(user.Id))
+            MessagesByUser[user.Id] = new List<ChatMessage>();
     }
 
     private async Task Send()
     {
         if (string.IsNullOrWhiteSpace(newMessage) || SelectedUser == null) return;
 
+        if (!MessagesByUser.ContainsKey(SelectedUser.Id))
+            MessagesByUser[SelectedUser.Id] = new List<ChatMessage>();
+
+        MessagesByUser[SelectedUser.Id].Add(new ChatMessage
+        {
+            Username = "You",
+            Message = newMessage
+        });
 
         await hubConnection.SendAsync("SendMessage", SelectedUser.Id, CurrentUserId, newMessage);
         newMessage = string.Empty;
