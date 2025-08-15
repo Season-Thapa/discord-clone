@@ -47,22 +47,16 @@
     private string newServerName;
 
     protected override async Task OnInitializedAsync()
-    {     
+    {
 
         ServersList = (await ServerService.GetServersForUserAsync(CurrentUserId)).ToList();
-        await LoadAvailableServers();
-
-    }
-
-    private async Task LoadAvailableServers()
-    {
         availableServers = (await ServerService.GetServersUserNotInAsync(CurrentUserId)).ToList();
     }
-
     private async Task JoinServer(int serverId)
     {
         await ServerService.JoinServerAsync(serverId, CurrentUserId);
         InvokeAsync(StateHasChanged);
+
     }
 
     private async Task CreateServer()

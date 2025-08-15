@@ -12,21 +12,21 @@
     <!-- Channel Sidebar -->
     <div style="width: 240px; background-color: #2F3136; color: white; display: flex; flex-direction: column;">
         <h4 style="padding: 10px;">Message User</h4>
-@if (AvailableUsers == null)
+        @if (AvailableUsers == null)
         {
         <p style="padding: 10px;">
             Loading...</p>
         }
         else
         {
-@foreach (var user in AvailableUsers)
-            {
-            <div  @onclick="() => MessageToPerson(user.Id)"
-                 style="padding: 8px 12px; cursor: pointer; color: #b9bbbe;">
-@user.Name
-                </div>
-}
-}
+            @foreach (var user in AvailableUsers)
+            {                      
+               <div  @onclick="() => MessageToPerson(user.Id)"
+                    style="padding: 8px 12px; cursor: pointer; color: #b9bbbe;">
+                       @user.Name
+               </div>
+            }
+       }
 </div>
 
 </div>
