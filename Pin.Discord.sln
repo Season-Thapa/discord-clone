@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pin.Discord.Core", "Pin.Dis
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pin.Discord.Blazor", "Pin.Discord.Blazor\Pin.Discord.Blazor.csproj", "{592747A7-09FF-4704-8C30-3F3ADE969199}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewInDotnetC#t12", "NewInDotnetC#t12\NewInDotnetC#t12.csproj", "{A3AF0637-E133-4634-913B-1EED57518D47}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{592747A7-09FF-4704-8C30-3F3ADE969199}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{592747A7-09FF-4704-8C30-3F3ADE969199}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{592747A7-09FF-4704-8C30-3F3ADE969199}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3AF0637-E133-4634-913B-1EED57518D47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3AF0637-E133-4634-913B-1EED57518D47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3AF0637-E133-4634-913B-1EED57518D47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3AF0637-E133-4634-913B-1EED57518D47}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
