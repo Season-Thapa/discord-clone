@@ -11,12 +11,8 @@
 
         @if (availableServers == null)
         {
-            <p>Loading...</p>
-        }
-        else if (!availableServers.Any())
-        {
-            <p>You have joined all available servers.</p>
-        }
+            <p>No server available</p>
+        }  
         else
         {
             <ul>
@@ -41,21 +37,19 @@
 @code {
     [Parameter]
     public int CurrentUserId { get; set; }
-    private List<Server> ServersList;
     private List<Server> availableServers;
     private int currentUserId;
     private string newServerName;
 
     protected override async Task OnInitializedAsync()
     {
-
-        ServersList = (await ServerService.GetServersForUserAsync(CurrentUserId)).ToList();
         availableServers = (await ServerService.GetServersUserNotInAsync(CurrentUserId)).ToList();
     }
     private async Task JoinServer(int serverId)
     {
         await ServerService.JoinServerAsync(serverId, CurrentUserId);
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
+        NavManager.NavigateTo($"/");
 
     }
 
@@ -64,11 +58,8 @@
         if (!string.IsNullOrWhiteSpace(newServerName))
         {
             await ServerService.AddNewServerAsync(newServerName, CurrentUserId);
-            NavManager.NavigateTo("/servers");
+            await InvokeAsync(StateHasChanged);
+            NavManager.NavigateTo("/");
         }
-    }
-    private void NavigateToDiscover()
-    {
-        NavManager.NavigateTo("/availableServers");
     }
 }

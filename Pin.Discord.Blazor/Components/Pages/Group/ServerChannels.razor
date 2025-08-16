@@ -4,10 +4,12 @@
 @using Pin.Discord.Core.Interfaces
 @using Microsoft.AspNetCore.SignalR.Client
 @using Pin.Discord.Blazor.Models
+@using Pin.Discord.Blazor.State
+
 @inject IChannelService ChannelService
 @inject IUserService UserService
 @inject NavigationManager Navigation
-
+@inject UserState UserState
 <div style="display: flex; height: 100vh;">
     <!-- Channel Sidebar -->
     <div style="width: 240px; background-color: #2F3136; color: white; display: flex; flex-direction: column;">
@@ -80,9 +82,14 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!UserState.IsLoggedIn)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
         hubConnection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
-            .Build();
+        .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+        .Build();
 
         hubConnection.On<ChatMessage>("ReceiveGroupMessage", (message) =>
         {

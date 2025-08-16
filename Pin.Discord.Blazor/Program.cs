@@ -31,7 +31,6 @@ namespace Pin.Discord.Blazor
             builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IMessageService, MessageService>();
-            builder.Services.AddScoped<IServerMemberService, ServerMemberService>();
             builder.Services.AddScoped<IChannelService, ChannelService>();
             builder.Services.AddScoped<IServerService, ServerService>();
             builder.Services.AddScoped<UserState>();

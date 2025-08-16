@@ -1,7 +1,7 @@
-﻿
+﻿@using Pin.Discord.Core.Interfaces
+@using Pin.Discord.Blazor.State
 ﻿@using Pin.Discord.Core.Entities
-@using Pin.Discord.Core.Interfaces
-@using Pin.Discord.Core.Services.State
+
 
 @inject UserState UserState
 @inject IServerService ServerService
@@ -73,4 +73,4 @@
         NavManager.NavigateTo($"/users/chat/{CurrentUserId}");
 
     }
-    }
+}
