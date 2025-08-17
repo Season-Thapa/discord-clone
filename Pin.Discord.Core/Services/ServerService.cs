@@ -62,21 +62,6 @@ namespace Pin.Discord.Core.Services
                 throw;
             }
         }
-
-        public async Task DeleteServerAsync(int serverId)
-        {
-            try
-            {
-                var server = _context.Servers.Find(serverId);
-                _context.Servers.Remove(server);
-                await _context.SaveChangesAsync();
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
         public async Task EditServerNameAsync(int serverId, string newName)
         {
             try

@@ -103,7 +103,7 @@
     }
     protected override async Task OnParametersSetAsync()
     {
-        AvailableUsers = (await UserService.GetUserNotInAsync(CurrentUserId)).ToList();
+        AvailableUsers = (await UserService.GetOtherUsersAsync(CurrentUserId)).ToList();
         SelectedUser = null;
         ChatMessages.Clear();
     }

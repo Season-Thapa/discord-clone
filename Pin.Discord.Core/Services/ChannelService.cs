@@ -26,10 +26,6 @@ namespace Pin.Discord.Core.Services
             return await _context.Channels.Where(c => c.ServerId == serverId).ToListAsync();
               
         }
-        public async Task<Channel> GetChannelByChannelId( int channelId)
-        {
-            return await _context.Channels.FindAsync(channelId);
-        }
         public async Task<Channel> AddNewChannel( string channelName,  int serverId)
         {
             Channel newChannel = new Channel { ChannelName = channelName, ServerId = serverId };
@@ -37,23 +33,6 @@ namespace Pin.Discord.Core.Services
             _context.Channels.Add(newChannel);
             await _context.SaveChangesAsync();
             return newChannel;
-        }
-
-        public async Task<bool> DeleteChannel(int channelId)
-        {
-            try
-            {
-                Channel channel = _context.Channels.Find(channelId);
-
-                _context.Channels.Remove(channel);
-
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return false;
-            }
         }
         public async Task DeleteByServerId(int serverId)
         {

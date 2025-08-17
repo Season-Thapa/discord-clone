@@ -50,7 +50,7 @@ namespace Pin.Discord.Core.Services
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.Name == name);
         }
-        public async Task<IEnumerable<User>> GetUserNotInAsync(int userId)
+        public async Task<IEnumerable<User>> GetOtherUsersAsync(int userId)
         {
             var userIds = await _context.Users.Select(u => u.Id).ToListAsync();
             return await _context.Users
