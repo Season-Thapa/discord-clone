@@ -40,5 +40,15 @@ namespace Pin.Discord.Core.Services
                 throw;
             }
         }
+        public async Task DeleteServerMemberAsync(int serverId, int userId)
+        {
+            var member = await _context.ServerMembers
+                .FirstOrDefaultAsync(sm => sm.ServerId == serverId && sm.UserId == userId);
+            if (member != null)
+            {
+                _context.ServerMembers.Remove(member);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

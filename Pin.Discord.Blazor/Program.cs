@@ -33,6 +33,8 @@ namespace Pin.Discord.Blazor
             builder.Services.AddScoped<IMessageService, MessageService>();
             builder.Services.AddScoped<IChannelService, ChannelService>();
             builder.Services.AddScoped<IServerService, ServerService>();
+            builder.Services.AddScoped<IServerMemberService, ServerMemberService>();
+
             builder.Services.AddScoped<UserState>();
             builder.Services.AddScoped<ServerState>();
             var app = builder.Build();
