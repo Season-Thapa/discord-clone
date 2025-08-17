@@ -13,7 +13,12 @@
     {
         <!-- Sidebar -->
         <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="NavigateToDiscover">+</button>
-        <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="AvailableUsers">M</button>
+        <button class="btn btn-primary rounded-circle mb-3"
+                style="width: 48px; height: 48px; font-size: 22px;
+               display: flex; align-items: center; justify-content: center;"
+                @onclick="AvailableUsers">
+            💬
+        </button>
 
         @if (ServerState.Servers == null)
         {
