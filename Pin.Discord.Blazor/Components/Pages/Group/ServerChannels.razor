@@ -85,8 +85,19 @@
                 {
                     @foreach (var msg in messages)
                     {
-                        <div class="message">
+                        <div class="message-container" style="position: relative; margin-bottom: 12px; padding: 10px 12px; background-color: #40444B; border-radius: 8px; max-width: 70%;">
                             <strong>@msg.Username:</strong> @msg.Message
+
+                            <div class="reactions" style="position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; align-items: center;">
+                                @foreach (var reaction in msg.Reactions)
+                                {
+                                    <span style="background-color:#5865F2; color:white; padding:2px 6px; border-radius:12px; font-size:0.8em;">
+                                        @reaction.Key (@reaction.Value.Count)
+                                    </span>
+                                }
+                                <button @onclick='() => AddReaction(msg, " 👍")'>👍</button>
+                                <button @onclick='() => AddReaction(msg, " ❤️")'>❤️</button>
+                            </div>
                         </div>
                     }
                 }
@@ -133,7 +144,28 @@
         {
             if (selectedChannel != null && message.ChannelId == selectedChannel.Id.ToString())
             {
-                messages.Add(message);
+                messages.Add(new ChatMessage
+                {
+                    Id = message.Id,
+                    SenderId = message.SenderId,
+                    Username = message.Username,
+                    Message = message.Message,
+                    ChannelId = message.ChannelId
+                });
+                InvokeAsync(StateHasChanged);
+            }
+        });
+        hubConnection.On<Guid, int, string>("ReceiveGroupReaction", (messageId, userId, emoji) =>
+        {
+            var msg = messages.FirstOrDefault(m => m.Id == messageId);
+            if (msg != null)
+            {
+                if (!msg.Reactions.ContainsKey(emoji))
+                    msg.Reactions[emoji] = new List<int>();
+
+                if (!msg.Reactions[emoji].Contains(userId))
+                    msg.Reactions[emoji].Add(userId);
+
                 InvokeAsync(StateHasChanged);
             }
         });
@@ -166,6 +198,8 @@
             var user = await UserService.GetByIdAsync(CurrentUserId);
             var message = new ChatMessage
             {
+                Id = Guid.NewGuid(),
+                SenderId = user.Id,
                 Username = user.Name,
                 Message = newMessage,
                 ChannelId = selectedChannel.Id.ToString()
@@ -230,6 +264,10 @@
     {
         isMenuOpen = !isMenuOpen;
     }
+    private async Task AddReaction(ChatMessage msg, string emoji)
+    {
+        await hubConnection.SendAsync("AddReactionToGroup", msg.ChannelId, msg.Id, CurrentUserId, emoji);
+    }
     public async ValueTask DisposeAsync()
     {
         if (hubConnection != null)
@@ -237,4 +275,5 @@
             await hubConnection.DisposeAsync();
         }
     }
+
 }
