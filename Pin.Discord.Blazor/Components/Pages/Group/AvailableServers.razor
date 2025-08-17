@@ -1,37 +1,38 @@
 ﻿@page "/user/{CurrentUserId:int}/availableServers"
 @using Pin.Discord.Core.Entities
 @using Pin.Discord.Core.Interfaces
+@using Pin.Discord.Blazor.State
 
 @inject IServerService ServerService
 @inject NavigationManager NavManager
+@inject ServerState ServerState
+<!-- Main Content -->
+<div class="server-content" style="flex-grow: 1; background-color: #2F3136; color: white; padding: 20px; overflow-y: auto;">
+    <h3>Discover Servers</h3>
 
-    <!-- Main Content -->
-    <div class="server-content" style="flex-grow: 1; background-color: #2F3136; color: white; padding: 20px; overflow-y: auto;">
-        <h3>Discover Servers</h3>
+    @if (availableServers == null)
+    {
+        <p>No server available</p>
+    }
+    else
+    {
+        <ul>
+            @foreach (var server in availableServers)
+            {
+                <li>
+                    @server.ServerName
+                    <button @onclick="() => JoinServer(server.Id)">Join</button>
+                </li>
+            }
+        </ul>
+    }
 
-        @if (availableServers == null)
-        {
-            <p>No server available</p>
-        }  
-        else
-        {
-            <ul>
-                @foreach (var server in availableServers)
-                {
-                    <li>
-                        @server.ServerName
-                        <button @onclick="() => JoinServer(server.Id)">Join</button>
-                    </li>
-                }
-            </ul>
-        }
+    <hr />
 
-        <hr />
-
-        <h3>Create Your Own Server</h3>
-        <input type="text" placeholder="Enter server name" @bind="newServerName" />
-        <button @onclick="CreateServer">Create</button>
-    </div>
+    <h3>Create Your Own Server</h3>
+    <input type="text" placeholder="Enter server name" @bind="newServerName" />
+    <button @onclick="CreateServer">Create</button>
+</div>
 
 
 @code {
@@ -48,7 +49,7 @@
     private async Task JoinServer(int serverId)
     {
         await ServerService.JoinServerAsync(serverId, CurrentUserId);
-        await InvokeAsync(StateHasChanged);
+        ServerState.Servers = (await ServerService.GetServersForUserAsync(CurrentUserId)).ToList();
         NavManager.NavigateTo($"/");
 
     }
@@ -58,7 +59,7 @@
         if (!string.IsNullOrWhiteSpace(newServerName))
         {
             await ServerService.AddNewServerAsync(newServerName, CurrentUserId);
-            await InvokeAsync(StateHasChanged);
+            ServerState.Servers = (await ServerService.GetServersForUserAsync(CurrentUserId)).ToList();
             NavManager.NavigateTo("/");
         }
     }

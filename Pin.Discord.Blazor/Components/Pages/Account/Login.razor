@@ -1,6 +1,6 @@
 ﻿@page "/login"
 @using Pin.Discord.Core.Interfaces
-@using Pin.Discord.Core.Services.State;
+@using Pin.Discord.Blazor.State
 
 
 @inject IUserService UserService
@@ -15,8 +15,10 @@
     <p style="color:red">e</p>
 }
 
-<input @bind="Username" placeholder="Username" /><br />
-<input @bind="Password" type="password" placeholder="Password" /><br />
+<input @bind="Username" placeholder="Username" />
+<br />
+<input @bind="Password" type="password" placeholder="Password" />
+<br />
 <button @onclick="LoginAsync">Login</button>
 
 

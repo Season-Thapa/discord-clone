@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Pin.Discord.Blazor.Components;
 using Pin.Discord.Blazor.Hubs;
+using Pin.Discord.Blazor.State;
 using Pin.Discord.Core.Data;
 using Pin.Discord.Core.Interfaces;
 using Pin.Discord.Core.Services;
-using Pin.Discord.Core.Services.State;
 
 namespace Pin.Discord.Blazor
 {
@@ -34,6 +34,7 @@ namespace Pin.Discord.Blazor
             builder.Services.AddScoped<IChannelService, ChannelService>();
             builder.Services.AddScoped<IServerService, ServerService>();
             builder.Services.AddScoped<UserState>();
+            builder.Services.AddScoped<ServerState>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
