@@ -9,7 +9,7 @@ namespace Pin.Discord.Core.Interfaces
 {
     public interface IMessageService
     {
-        Task ReportMessageAsync(int reporterId, int offenderId,string message);
+        Task ReportMessageAsync(int reporterId, int offenderId,string message,int ? channelId = null);
 
     }
 }

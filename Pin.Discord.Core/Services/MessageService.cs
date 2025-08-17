@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Pin.Discord.Core.Services
@@ -19,7 +20,7 @@ namespace Pin.Discord.Core.Services
             _context = dbContext;
         }
 
-        public async Task ReportMessageAsync(int reporterId, int offenderId, string message)
+        public async Task ReportMessageAsync(int reporterId, int offenderId, string message, int? channelId = null)
         {
             var reportedMessage = new ReportedMessage
             {
@@ -27,10 +28,12 @@ namespace Pin.Discord.Core.Services
                 ReporterId = reporterId,
                 OffenderId = offenderId,
                 ReportedAt = DateTime.Now,
+                ChannelId = channelId
             };
             await _context.ReportedMessages.AddAsync(reportedMessage);
             await _context.SaveChangesAsync();
         }
+
     }
 
      
