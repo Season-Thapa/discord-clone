@@ -5,6 +5,7 @@
 @using Pin.Discord.Blazor.Models
 
 @inject IUserService UserService
+@inject IMessageService MessageService
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
@@ -43,8 +44,22 @@
                 {
                     @foreach (var msg in MessagesByUser[SelectedUser.Id])
                     {
-                        <div>
-                            <strong>@msg.Username:</strong> @msg.Message
+                        <div style="margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>
+                                <strong>@msg.Username:</strong> @msg.Message
+                            </span>
+                            @if (msg.SenderId != CurrentUserId)
+                            {
+                                @if (!msg.IsReported)
+                                {
+                                    <button @onclick="() => ReportMessage(msg)">Report</button>
+                                }
+                                else
+                                {
+                                    <span style="margin-left: 10px; font-size: 0.8em; color: red;">Reported</span>
+                                }
+
+                            }
                         </div>
                     }
                 }
@@ -89,6 +104,7 @@
                 MessagesByUser[sender.Id] = new List<ChatMessage>();
             MessagesByUser[sender.Id].Add(new ChatMessage
             {
+                SenderId = sender.Id,
                 Username = sender.Name,
                 Message = message
             });
@@ -124,6 +140,7 @@
 
         MessagesByUser[SelectedUser.Id].Add(new ChatMessage
         {
+            SenderId = CurrentUserId,
             Username = "You",
             Message = newMessage
         });
@@ -133,7 +150,14 @@
         await InvokeAsync(StateHasChanged);
 
     }
-
+    private async Task ReportMessage(ChatMessage msg)
+    {
+        if (SelectedUser == null || msg == null) return;
+        msg.IsReported = true;
+        await hubConnection.SendAsync("ReportMessage", CurrentUserId, SelectedUser.Id, msg.Message);
+        await MessageService.ReportMessageAsync(CurrentUserId,SelectedUser.Id,msg.Message);
+        await InvokeAsync(StateHasChanged);
+    }
     public async ValueTask DisposeAsync()
     {
         if (hubConnection != null)

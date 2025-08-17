@@ -66,7 +66,7 @@ namespace Pin.Discord.Core.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Pin.Discord.Core.Entities.Message", b =>
+            modelBuilder.Entity("Pin.Discord.Core.Entities.ReportedMessage", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -171,7 +171,7 @@ namespace Pin.Discord.Core.Migrations
                     b.Navigation("Server");
                 });
 
-            modelBuilder.Entity("Pin.Discord.Core.Entities.Message", b =>
+            modelBuilder.Entity("Pin.Discord.Core.Entities.ReportedMessage", b =>
                 {
                     b.HasOne("Pin.Discord.Core.Entities.Channel", "Channel")
                         .WithMany("Messages")

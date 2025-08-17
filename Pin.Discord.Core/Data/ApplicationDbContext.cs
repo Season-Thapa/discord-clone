@@ -26,7 +26,7 @@ namespace Pin.Discord.Core.Data
         }
 
         public DbSet<Channel> Channels { get; set; }
-        public DbSet<Message> Messages { get; set; }
+        public DbSet<ReportedMessage> ReportedMessages { get; set; }
         public DbSet<Server> Servers { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<ServerMember> ServerMembers { get; set; }

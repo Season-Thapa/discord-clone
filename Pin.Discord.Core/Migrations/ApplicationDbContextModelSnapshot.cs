@@ -17,7 +17,7 @@ namespace Pin.Discord.Core.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.18")
+                .HasAnnotation("ProductVersion", "8.0.19")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -63,7 +63,7 @@ namespace Pin.Discord.Core.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Pin.Discord.Core.Entities.Message", b =>
+            modelBuilder.Entity("Pin.Discord.Core.Entities.ReportedMessage", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -71,25 +71,26 @@ namespace Pin.Discord.Core.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ChannelId")
+                    b.Property<int?>("ChannelId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("MessageContent")
+                    b.Property<string>("Content")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
+                    b.Property<int>("OffenderId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReportedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ReporterId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ChannelId");
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Messages");
+                    b.ToTable("ReportedMessages");
                 });
 
             modelBuilder.Entity("Pin.Discord.Core.Entities.Server", b =>
@@ -168,23 +169,11 @@ namespace Pin.Discord.Core.Migrations
                     b.Navigation("Server");
                 });
 
-            modelBuilder.Entity("Pin.Discord.Core.Entities.Message", b =>
+            modelBuilder.Entity("Pin.Discord.Core.Entities.ReportedMessage", b =>
                 {
-                    b.HasOne("Pin.Discord.Core.Entities.Channel", "Channel")
+                    b.HasOne("Pin.Discord.Core.Entities.Channel", null)
                         .WithMany("Messages")
-                        .HasForeignKey("ChannelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Pin.Discord.Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Channel");
-
-                    b.Navigation("User");
+                        .HasForeignKey("ChannelId");
                 });
 
             modelBuilder.Entity("Pin.Discord.Core.Entities.ServerMember", b =>

@@ -13,6 +13,6 @@ namespace Pin.Discord.Core.Entities
         public string ChannelName { get; set; }
         public int ServerId { get; set; }
         public Server Server { get; set; }
-        public List<Message> Messages { get; set; }
+        public List<ReportedMessage> Messages { get; set; }
     }
 }
