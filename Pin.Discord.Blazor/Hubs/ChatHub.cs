@@ -6,15 +6,10 @@ namespace Pin.Discord.Blazor.Hubs
     public class ChatHub : Hub
     {
  
-        public async Task SendMessage(int toUserId, int fromUserId, string message)
+        public async Task SendMessage(int toUserId, int fromUserId, Guid messageId, string message)
         {
-            // Send to recipient
             await Clients.User(toUserId.ToString())
-                .SendAsync("ReceiveMessage", fromUserId.ToString(), message);
-
-            // Optionally send to sender as well (to show message instantly in their chat)
-            await Clients.User(fromUserId.ToString())
-                .SendAsync("ReceiveMessage", fromUserId.ToString(), message);
+                .SendAsync("ReceiveMessage", messageId, fromUserId.ToString(), message);
         }
         public async Task SendMessageToGroup(string groupName, ChatMessage message)
         {
@@ -33,10 +28,15 @@ namespace Pin.Discord.Blazor.Hubs
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
 
         }
-
-        public string GetConnectionId()
+        public async Task AddReaction(Guid messageId, int userId, string emoji, int toUserId)
         {
-            return Context.ConnectionId;
+            await Clients.User(toUserId.ToString())
+                .SendAsync("ReceiveReaction", messageId, userId, emoji);
         }
+        public async Task AddReactionToGroup(string groupName, Guid messageId, int userId, string emoji)
+        {
+            await Clients.Group(groupName).SendAsync("ReceiveGroupReaction", messageId, userId, emoji);
+        }
+
     }
 }
