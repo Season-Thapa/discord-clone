@@ -11,9 +11,7 @@ namespace Pin.Discord.Core.Interfaces
     {
         Task<IEnumerable<Channel>> GetAsync();
         Task<IEnumerable<Channel>> GetChannelsByServerIdAsync(int serverId);
-        Task<Channel> GetChannelByChannelId(int channelId);
         Task<Channel> AddNewChannel(string channelName, int serverId);
-        Task<bool> DeleteChannel(int channelId);
         Task DeleteByServerId(int serverId);
     }
 }

@@ -4,48 +4,86 @@
 @using Pin.Discord.Core.Interfaces
 @using Microsoft.AspNetCore.SignalR.Client
 @using Pin.Discord.Blazor.Models
+@using Pin.Discord.Blazor.State
+
+@inject IServerMemberService ServerMemberService
+@inject IServerService ServerService
 @inject IChannelService ChannelService
 @inject IUserService UserService
 @inject NavigationManager Navigation
+@inject UserState UserState
+@inject ServerState ServerState
 
 <div style="display: flex; height: 100vh;">
     <!-- Channel Sidebar -->
     <div style="width: 240px; background-color: #2F3136; color: white; display: flex; flex-direction: column;">
-        <h4 style="padding: 10px;">Channels</h4>
-        @if (Channels == null)
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
+            <h4 style="margin: 0;">channels</h4>
+            <!-- Three dot menu -->
+            <div style="position: relative;">
+                <button class="btn btn-sm btn-secondary" @onclick="ToggleMenu">
+                    ⋮
+                </button>
+
+                @if (isMenuOpen)
+                {
+                    <ul class="dropdown-menu show" style="display:block; position:absolute; right:0; top:100%;">
+                        <li>
+                            <a class="dropdown-item" href="#" @onclick="ShowRenameInput"@onclick:preventDefault="true">Rename Server</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="#" @onclick="LeaveServer">Leave Server</a>
+                        </li>
+                    </ul>
+
+                }
+            </div>
+        </div>
+            @if (showRenameInput)
+            {
+                <div style="padding:10px;">
+                    <input @bind="newServerName" placeholder="New server name" style="width: 100%;" />
+                    <button class="btn btn-sm btn-primary" @onclick="RenameServer">Save</button>
+                    <button class="btn btn-sm btn-secondary" @onclick="CancelRename">Cancel</button>
+                </div>
+            }
+        <!-- channels List -->
+        @if (channels == null)
         {
             <p style="padding: 10px;">Loading...</p>
         }
         else
         {
-            @foreach (var channel in Channels)
+            @foreach (var channel in channels)
             {
                 <div @onclick="() => SelectChannel(channel)"
-                     style="padding: 8px 12px; cursor: pointer; color: @(SelectedChannel?.Id == channel.Id ? "white" : "#b9bbbe")">
+                     style="padding: 8px 12px; cursor: pointer; color: @(selectedChannel?.Id == channel.Id ? "white" : "#b9bbbe")">
                     # @channel.ChannelName
                 </div>
             }
         }
+
+        <!-- Add Channel -->
         <div style="padding: 10px;">
-            <input @bind="NewChannelName" placeholder="New channel name" style="width: 100%;" />
+            <input @bind="newChannelName" placeholder="New channel name" style="width: 100%;" />
             <button @onclick="AddChannelAsync" style="margin-top: 5px;">+</button>
         </div>
     </div>
 
     <!-- Chat Area -->
     <div style="flex-grow: 1; background-color: #36393F; color: white; padding: 20px;">
-        @if (SelectedChannel != null)
+        @if (selectedChannel != null)
         {
-            <h3># @SelectedChannel.ChannelName</h3>
+            <h3># @selectedChannel.ChannelName</h3>
 
             <div class="messages-container" style="max-height: calc(100vh - 150px); overflow-y: auto;">
-                @if (!Messages.Any())
+                @if (!messages.Any())
                 {
                     <p>No messages yet...</p>
                 }
                 else
                 {
-                    @foreach (var msg in Messages)
+                    @foreach (var msg in messages)
                     {
                         <div class="message">
                             <strong>@msg.Username:</strong> @msg.Message
@@ -53,9 +91,9 @@
                     }
                 }
             </div>
-
             <div style="margin-top: 10px;">
-                <input @bind="newMessage" placeholder="Type your message..." @onkeydown="HandleKeyPress" style="width: 80%;" />
+                <input @bind="newMessage" placeholder="Type your message..."
+                       style="flex: 1; padding: 8px; border-radius: 4px; border: none;" />
                 <button @onclick="SendMessage">Send</button>
             </div>
         }
@@ -70,25 +108,32 @@
     [Parameter] public int CurrentUserId { get; set; }
     [Parameter] public int ServerId { get; set; }
 
-    private List<Channel> Channels;
-    private Channel SelectedChannel;
-    private string NewChannelName;
-    private List<ChatMessage> Messages = new();
+    private List<Channel> channels;
+    private Channel selectedChannel;
+    private string newChannelName;
+    private List<ChatMessage> messages = new();
     private string newMessage;
-
+    private string newServerName;
+    private bool showRenameInput = false;
+    private bool isMenuOpen;
     private HubConnection hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
+        if (!UserState.IsLoggedIn)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
         hubConnection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
-            .Build();
+        .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+        .Build();
 
         hubConnection.On<ChatMessage>("ReceiveGroupMessage", (message) =>
         {
-            if (SelectedChannel != null && message.ChannelId == SelectedChannel.Id.ToString())
+            if (selectedChannel != null && message.ChannelId == selectedChannel.Id.ToString())
             {
-                Messages.Add(message);
+                messages.Add(message);
                 InvokeAsync(StateHasChanged);
             }
         });
@@ -97,62 +142,94 @@
     }
     protected override async Task OnParametersSetAsync()
     {
-        Channels = (await ChannelService.GetChannelsByServerIdAsync(ServerId)).ToList();
-        SelectedChannel = null;
-        Messages.Clear();
+        channels = (await ChannelService.GetChannelsByServerIdAsync(ServerId)).ToList();
+        selectedChannel = null;
+        messages.Clear();
     }
     private async Task SelectChannel(Channel channel)
     {
-        // Leave old group
-        if (SelectedChannel != null)
+        if (selectedChannel != null)
         {
-            await hubConnection.SendAsync("RemoveFromGroup", SelectedChannel.Id.ToString());
+            await hubConnection.SendAsync("RemoveFromGroup", selectedChannel.Id.ToString());
         }
 
-        SelectedChannel = channel;
-        Messages.Clear();
+        selectedChannel = channel;
+        messages.Clear();
 
-        // Join new group
-        await hubConnection.SendAsync("AddToGroup", SelectedChannel.Id.ToString());
+        await hubConnection.SendAsync("AddToGroup", selectedChannel.Id.ToString());
     }
 
     private async Task SendMessage()
     {
-        if (!string.IsNullOrWhiteSpace(newMessage) && SelectedChannel != null)
+        if (!string.IsNullOrWhiteSpace(newMessage) && selectedChannel != null)
         {
             var user = await UserService.GetByIdAsync(CurrentUserId);
             var message = new ChatMessage
             {
                 Username = user.Name,
                 Message = newMessage,
-                ChannelId = SelectedChannel.Id.ToString()
+                ChannelId = selectedChannel.Id.ToString()
             };
 
-            await hubConnection.SendAsync("SendMessageToGroup", SelectedChannel.Id.ToString(), message);
+            await hubConnection.SendAsync("SendMessageToGroup", selectedChannel.Id.ToString(), message);
 
             newMessage = string.Empty;
             await InvokeAsync(StateHasChanged);
         }
     }
-
-    private async Task HandleKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            await SendMessage();
-        }
-    }
-
     private async Task AddChannelAsync()
     {
-        if (!string.IsNullOrWhiteSpace(NewChannelName))
+        if (!string.IsNullOrWhiteSpace(newChannelName))
         {
-            var channel = await ChannelService.AddNewChannel(NewChannelName, ServerId);
-            Channels.Add(channel);
-            NewChannelName = string.Empty;
+            var channel = await ChannelService.AddNewChannel(newChannelName, ServerId);
+            channels.Add(channel);
+            newChannelName = string.Empty;
         }
     }
-
+    private async Task LeaveServer()
+    {
+        try
+        {
+            await ServerMemberService.DeleteServerMemberAsync(ServerId, CurrentUserId);
+            ServerState.Servers = (await ServerService.GetServersForUserAsync(CurrentUserId)).ToList();
+            Navigation.NavigateTo($"/");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+    private void ShowRenameInput()
+    {
+        showRenameInput = true;
+        isMenuOpen = false;
+    }
+    private async Task RenameServer()
+    {
+        if (!string.IsNullOrWhiteSpace(newServerName))
+        {
+            try
+            {
+                await ServerService.EditServerNameAsync(ServerId, newServerName);
+                ServerState.Servers = (await ServerService.GetServersForUserAsync(CurrentUserId)).ToList();
+                newServerName = string.Empty;
+                showRenameInput = false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+    }
+    private void CancelRename()
+    {
+        newServerName = string.Empty;
+        showRenameInput = false;
+    }
+    private void ToggleMenu()
+    {
+        isMenuOpen = !isMenuOpen;
+    }
     public async ValueTask DisposeAsync()
     {
         if (hubConnection != null)

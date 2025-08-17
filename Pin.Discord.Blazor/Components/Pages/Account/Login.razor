@@ -1,6 +1,6 @@
 ﻿@page "/login"
 @using Pin.Discord.Core.Interfaces
-@using Pin.Discord.Core.Services.State;
+@using Pin.Discord.Blazor.State
 
 
 @inject IUserService UserService
@@ -10,24 +10,26 @@
 <h3>Login</h3>
 
 
-@if (!string.IsNullOrEmpty(ErrorMessage))
+@if (!string.IsNullOrEmpty(errorMessage))
 {
-    <p style="color:red">e</p>
+    <p style="color:red">@errorMessage</p>
 }
 
-<input @bind="Username" placeholder="Username" /><br />
-<input @bind="Password" type="password" placeholder="Password" /><br />
+<input @bind="username" placeholder="username" />
+<br />
+<input @bind="password" type="password" placeholder="password" />
+<br />
 <button @onclick="LoginAsync">Login</button>
 
 
 @code {
-    private string Username;
-    private string Password;
-    private string ErrorMessage;
+    private string username;
+    private string password;
+    private string errorMessage;
 
     private async Task LoginAsync()
     {
-        var user = await UserService.AuthenticateAsync(Username, Password);
+        var user = await UserService.AuthenticateAsync(username, password);
 
         if (user != null)
         {
@@ -36,7 +38,7 @@
         }
         else
         {
-            ErrorMessage = "Invalid credentials";
+            errorMessage = "Invalid credentials";
         }
     }
 

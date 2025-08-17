@@ -1,5 +1,5 @@
 ﻿@inherits LayoutComponentBase
-@using Pin.Discord.Core.Services.State;
+@using Pin.Discord.Blazor.State
 
 @inject UserState UserState
 <div class="page d-flex" style="height: 100vh; background-color: #202225;">
@@ -10,28 +10,28 @@
                 <NavMenu CurrentUserId="@UserState.CurrentUserId" />
             </div>
         }
-      
-       else
-          {
-                <div class="p-3 bg-dark">
-                    <NavLink href="/login" class="text-primary text-decoration-none">Login</NavLink>
-                </div>
-                <div class="p-3 bg-dark">
-                    <NavLink href="/register" class="text-primary text-decoration-none">Register</NavLink>
-                </div>
-           }
-        
+
+        else
+        {
+            <div class="p-3 bg-dark">
+                <NavLink href="/login" class="text-primary text-decoration-none">Login</NavLink>
+            </div>
+            <div class="p-3 bg-dark">
+                <NavLink href="/register" class="text-primary text-decoration-none">Register</NavLink>
+            </div>
+        }
+
     </div>
 
-<main class="flex-grow-1" style="background-color: #2F3136; color: white; overflow-y: auto;">
-    <div class="top-row px-4" style="padding: 1rem; background-color: #2F3136;">
-        <a href="https://learn.microsoft.com/aspnet/core/" target="_blank" style="color: white;">About</a>
-    </div>
+    <main class="flex-grow-1" style="background-color: #2F3136; color: white; overflow-y: auto;">
+        <div class="top-row px-4" style="padding: 1rem; background-color: #2F3136;">
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank" style="color: white;">About</a>
+        </div>
 
-    <article class="content px-4">
-@Body
-</article>
-</main>
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
 </div>
 
 <div id="blazor-error-ui">
@@ -39,8 +39,6 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
- @code {
-        public int CurrentUserId { get; set; } = 0; // Default 0 = not logged in
-
-        // You can update this property after login
- }
+@code {
+    public int CurrentUserId { get; set; } = 0;
+}

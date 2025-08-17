@@ -12,8 +12,7 @@ namespace Pin.Discord.Core.Interfaces
         Task<User> AuthenticateAsync(string name, string password);
         Task<User> RegisterAsync(string name, string password);
         Task<User> GetByIdAsync(int id);
-        Task<User> GetByNameAsync(string name);
         Task<List<User>> GetAllUsersAsync();
-        Task<IEnumerable<User>> GetUserNotInAsync(int userId);
+        Task<IEnumerable<User>> GetOtherUsersAsync(int userId);
     }
 }

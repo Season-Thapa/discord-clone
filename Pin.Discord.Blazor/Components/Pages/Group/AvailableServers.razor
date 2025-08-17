@@ -1,0 +1,66 @@
+﻿@page "/user/{CurrentUserId:int}/availableServers"
+@using Pin.Discord.Core.Entities
+@using Pin.Discord.Core.Interfaces
+@using Pin.Discord.Blazor.State
+
+@inject IServerService ServerService
+@inject NavigationManager NavManager
+@inject ServerState ServerState
+<!-- Main Content -->
+<div class="server-content" style="flex-grow: 1; background-color: #2F3136; color: white; padding: 20px; overflow-y: auto;">
+    <h3>Discover Servers</h3>
+
+    @if (availableServers == null)
+    {
+        <p>No server available</p>
+    }
+    else
+    {
+        <ul>
+            @foreach (var server in availableServers)
+            {
+                <li>
+                    @server.ServerName
+                    <button @onclick="() => JoinServer(server.Id)">Join</button>
+                </li>
+            }
+        </ul>
+    }
+
+    <hr />
+
+    <h3>Create Your Own Server</h3>
+    <input type="text" placeholder="Enter server name" @bind="newServerName" />
+    <button @onclick="CreateServer">Create</button>
+</div>
+
+
+@code {
+    [Parameter]
+    public int CurrentUserId { get; set; }
+    private List<Server> availableServers;
+    private int currentUserId;
+    private string newServerName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableServers = (await ServerService.GetServersUserNotInAsync(CurrentUserId)).ToList();
+    }
+    private async Task JoinServer(int serverId)
+    {
+        await ServerService.JoinServerAsync(serverId, CurrentUserId);
+        ServerState.Servers = (await ServerService.GetServersForUserAsync(CurrentUserId)).ToList();
+        NavManager.NavigateTo($"/");
+
+    }
+
+    private async Task CreateServer()
+    {
+        if (!string.IsNullOrWhiteSpace(newServerName))
+        {
+            await ServerService.AddNewServerAsync(newServerName, CurrentUserId);
+            ServerState.Servers = (await ServerService.GetServersForUserAsync(CurrentUserId)).ToList();
+            NavManager.NavigateTo("/");
+        }
+    }
+}

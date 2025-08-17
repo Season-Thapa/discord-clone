@@ -1,11 +1,12 @@
-﻿
+﻿@using Pin.Discord.Core.Interfaces
+@using Pin.Discord.Blazor.State
 ﻿@using Pin.Discord.Core.Entities
-@using Pin.Discord.Core.Interfaces
-@using Pin.Discord.Core.Services.State
+
 
 @inject UserState UserState
 @inject IServerService ServerService
 @inject NavigationManager NavManager
+@inject ServerState ServerState
 
 <div class="d-flex flex-column align-items-center p-2" style="width: 80px; background-color: #202225; height: 100vh;">
     @if (UserState.IsLoggedIn)
@@ -14,13 +15,13 @@
         <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="NavigateToDiscover">+</button>
         <button class="btn btn-primary rounded-circle mb-3" style="width: 48px; height: 48px; font-size: 28px;" @onclick="AvailableUsers">M</button>
 
-        @if (ServersList == null)
+        @if (ServerState.Servers == null)
         {
             <p class="text-muted small text-center">Loading...</p>
         }
         else
         {
-            @foreach (var server in ServersList)
+            @foreach (var server in ServerState.Servers)
             {
                 <div class="d-flex justify-content-center align-items-center bg-secondary text-white rounded-circle mb-3"
                      title="@server.ServerName"
@@ -49,13 +50,16 @@
 @code {
     [Parameter]
     public int CurrentUserId { get; set; }
-    private List<Server> ServersList;
-
     protected override async Task OnParametersSetAsync()
     {
         if (CurrentUserId > 0)
         {
-            ServersList = (await ServerService.GetServersForUserAsync(CurrentUserId)).ToList();
+
+            if (ServerState.Servers == null || ServerState.Servers.Count == 0)
+            {
+                ServerState.Servers = (await ServerService.GetServersForUserAsync(CurrentUserId)).ToList();
+            }
+            ServerState.OnChange += StateHasChanged;
 
         }
     }
@@ -73,4 +77,8 @@
         NavManager.NavigateTo($"/users/chat/{CurrentUserId}");
 
     }
+    public void Dispose()
+    {
+        ServerState.OnChange -= StateHasChanged;
     }
+}

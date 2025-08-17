@@ -21,23 +21,14 @@ namespace Pin.Discord.Core.Services
         {
             return await _context.ServerMembers.ToListAsync();
         }
-        public async Task<IEnumerable<ServerMember>> GetByServerIdAsync(int serverId)
+        public async Task DeleteServerMemberAsync(int serverId, int userId)
         {
-          return await _context.ServerMembers.Where(s => s.ServerId == serverId).ToListAsync();
-            
-        }
-    
-        public async Task DeleteServerMembersByServer(int serverId)
-        {
-            try
+            var member = await _context.ServerMembers
+                .FirstOrDefaultAsync(sm => sm.ServerId == serverId && sm.UserId == userId);
+            if (member != null)
             {
-                var serverMembers = _context.ServerMembers.Where(sm => sm.ServerId == serverId);
-                _context.ServerMembers.RemoveRange(serverMembers);
+                _context.ServerMembers.Remove(member);
                 await _context.SaveChangesAsync();
-            }
-            catch
-            {
-                throw;
             }
         }
     }
