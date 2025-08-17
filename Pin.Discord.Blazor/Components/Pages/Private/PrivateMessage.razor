@@ -13,16 +13,16 @@
     <!-- Sidebar: List of Users -->
     <div style="width: 240px; background-color: #2F3136; color: white; display: flex; flex-direction: column;">
         <h4 style="padding: 10px;">Message User</h4>
-        @if (AvailableUsers == null)
+        @if (availableUsers == null)
         {
             <p style="padding: 10px;">No users</p>
         }
         else
         {
-            @foreach (var user in AvailableUsers)
+            @foreach (var user in availableUsers)
             {
                 <div @onclick="() => SelectUser(user)"
-                     style="padding: 8px 12px; cursor: pointer; color: @(user == SelectedUser ? "white" : "#b9bbbe")">
+                     style="padding: 8px 12px; cursor: pointer; color: @(user == selectedUser ? "white" : "#b9bbbe")">
                     @user.Name
                 </div>
             }
@@ -31,18 +31,18 @@
 
     <!-- Chat Panel -->
     <div style="flex-grow: 1; background-color: #36393F; color: white; padding: 20px;">
-        @if (SelectedUser != null)
+        @if (selectedUser != null)
         {
-            <h3>@SelectedUser.Name</h3>
+            <h3>@selectedUser.Name</h3>
 
             <div class="messages-container" style="max-height: calc(100vh - 150px); overflow-y: auto;">
-                @if (!MessagesByUser[SelectedUser.Id].Any())
+                @if (!messagesByUser[selectedUser.Id].Any())
                 {
                     <p>No messages yet, start chatting!</p>
                 }
                 else
                 {
-                    @foreach (var msg in MessagesByUser[SelectedUser.Id])
+                    @foreach (var msg in messagesByUser[selectedUser.Id])
                     {
                         <div class="message-container" style="position: relative; margin-bottom: 12px; padding: 10px 12px; background-color: #40444B; border-radius: 8px; max-width: 70%;">
 
@@ -98,14 +98,12 @@
 @code {
     [Parameter]
     public int CurrentUserId { get; set; }
-    private Dictionary<int, List<ChatMessage>> MessagesByUser = new();
-    private List<User> AvailableUsers;
-    private User SelectedUser;
-    private List<ChatMessage> ChatMessages = new();
+    private Dictionary<int, List<ChatMessage>> messagesByUser = new();
+    private List<User> availableUsers;
+    private User selectedUser;
+    private List<ChatMessage> chatMessages = new();
     private HubConnection hubConnection;
     private string newMessage;
-
-    public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
 
     protected override async Task OnInitializedAsync()
     {
@@ -116,10 +114,10 @@
         hubConnection.On<Guid, string, string>("ReceiveMessage", async (messageId, userId, message) =>
         {
             var sender = await UserService.GetByIdAsync(int.Parse(userId));
-            if (!MessagesByUser.ContainsKey(sender.Id))
-                MessagesByUser[sender.Id] = new List<ChatMessage>();
+            if (!messagesByUser.ContainsKey(sender.Id))
+                messagesByUser[sender.Id] = new List<ChatMessage>();
 
-            MessagesByUser[sender.Id].Add(new ChatMessage
+            messagesByUser[sender.Id].Add(new ChatMessage
             {
                 Id = messageId,
                 SenderId = sender.Id,
@@ -131,7 +129,7 @@
         });
         hubConnection.On<Guid, int, string>("ReceiveReaction",async (messageId, userId, emoji) =>
         {
-            foreach (var message in MessagesByUser)
+            foreach (var message in messagesByUser)
             {
                 var msg = message.Value.FirstOrDefault(m => m.Id == messageId);
                 if (msg != null)
@@ -152,24 +150,24 @@
     }
     protected override async Task OnParametersSetAsync()
     {
-        AvailableUsers = (await UserService.GetOtherUsersAsync(CurrentUserId)).ToList();
-        SelectedUser = null;
-        ChatMessages.Clear();
+        availableUsers = (await UserService.GetOtherUsersAsync(CurrentUserId)).ToList();
+        selectedUser = null;
+        chatMessages.Clear();
     }
     private async Task SelectUser(User user)
     {
-        SelectedUser = user;
+        selectedUser = user;
 
-        if (!MessagesByUser.ContainsKey(user.Id))
-            MessagesByUser[user.Id] = new List<ChatMessage>();
+        if (!messagesByUser.ContainsKey(user.Id))
+            messagesByUser[user.Id] = new List<ChatMessage>();
     }
 
     private async Task Send()
     {
-        if (string.IsNullOrWhiteSpace(newMessage) || SelectedUser == null) return;
+        if (string.IsNullOrWhiteSpace(newMessage) || selectedUser == null) return;
 
-        if (!MessagesByUser.ContainsKey(SelectedUser.Id))
-            MessagesByUser[SelectedUser.Id] = new List<ChatMessage>();
+        if (!messagesByUser.ContainsKey(selectedUser.Id))
+            messagesByUser[selectedUser.Id] = new List<ChatMessage>();
 
         var msg = new ChatMessage
         {
@@ -178,17 +176,17 @@
             Username = "You",
             Message = newMessage
         };
-        MessagesByUser[SelectedUser.Id].Add(msg);
-        await hubConnection.SendAsync("SendMessage", SelectedUser.Id, CurrentUserId, msg.Id, newMessage);
+        messagesByUser[selectedUser.Id].Add(msg);
+        await hubConnection.SendAsync("SendMessage", selectedUser.Id, CurrentUserId, msg.Id, newMessage);
         newMessage = string.Empty;
         await InvokeAsync(StateHasChanged);
 
     }
     private async Task ReportMessage(ChatMessage msg)
     {
-        if (SelectedUser == null || msg == null) return;
+        if (selectedUser == null || msg == null) return;
         msg.IsReported = true;
-        await MessageService.ReportMessageAsync(CurrentUserId, SelectedUser.Id, msg.Message);
+        await MessageService.ReportMessageAsync(CurrentUserId, selectedUser.Id, msg.Message);
         await InvokeAsync(StateHasChanged);
     }
     private async Task AddReaction(ChatMessage msg, string emoji)
@@ -199,7 +197,7 @@
         if (!msg.Reactions[emoji].Contains(CurrentUserId))
             msg.Reactions[emoji].Add(CurrentUserId);
 
-        await hubConnection.SendAsync("AddReaction", msg.Id, CurrentUserId, emoji, SelectedUser.Id);
+        await hubConnection.SendAsync("AddReaction", msg.Id, CurrentUserId, emoji, selectedUser.Id);
         await InvokeAsync(StateHasChanged);
     }
     public async ValueTask DisposeAsync()
